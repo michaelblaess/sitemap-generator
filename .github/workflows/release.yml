@@ -1,0 +1,111 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: playwright-sitemap-generator-windows
+            ext: .zip
+          - os: ubuntu-latest
+            artifact: playwright-sitemap-generator-linux
+            ext: .tar.gz
+          - os: macos-latest
+            artifact: playwright-sitemap-generator-macos
+            ext: .tar.gz
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pyinstaller
+
+      - name: Install Playwright Chromium
+        run: playwright install chromium
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller \
+            --name playwright-sitemap-generator \
+            --onedir \
+            --console \
+            --add-data "src/playwright_sitemap_generator/app.tcss:playwright_sitemap_generator" \
+            --hidden-import playwright_sitemap_generator \
+            --hidden-import playwright_sitemap_generator.app \
+            --hidden-import playwright_sitemap_generator.models \
+            --hidden-import playwright_sitemap_generator.models.crawl_result \
+            --hidden-import playwright_sitemap_generator.models.robots \
+            --hidden-import playwright_sitemap_generator.models.sitemap_writer \
+            --hidden-import playwright_sitemap_generator.models.settings \
+            --hidden-import playwright_sitemap_generator.services \
+            --hidden-import playwright_sitemap_generator.services.crawler \
+            --hidden-import playwright_sitemap_generator.widgets \
+            --hidden-import playwright_sitemap_generator.widgets.url_table \
+            --hidden-import playwright_sitemap_generator.widgets.stats_panel \
+            --hidden-import playwright_sitemap_generator.widgets.summary_panel \
+            --hidden-import playwright_sitemap_generator.screens \
+            --hidden-import playwright_sitemap_generator.screens.about \
+            src/playwright_sitemap_generator/__main__.py
+        shell: bash
+
+      - name: Bundle Chromium browsers
+        run: |
+          cp -r "$HOME/.cache/ms-playwright" dist/playwright-sitemap-generator/browsers 2>/dev/null || \
+          cp -r "$USERPROFILE/AppData/Local/ms-playwright" dist/playwright-sitemap-generator/browsers 2>/dev/null || \
+          cp -r "$HOME/Library/Caches/ms-playwright" dist/playwright-sitemap-generator/browsers 2>/dev/null || \
+          echo "Warning: Could not find Playwright browsers"
+        shell: bash
+
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd dist
+          Compress-Archive -Path playwright-sitemap-generator -DestinationPath ${{ matrix.artifact }}.zip
+        shell: pwsh
+
+      - name: Package (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd dist
+          tar -czf ${{ matrix.artifact }}.tar.gz playwright-sitemap-generator
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}${{ matrix.ext }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            playwright-sitemap-generator-windows.zip
+            playwright-sitemap-generator-linux.tar.gz
+            playwright-sitemap-generator-macos.tar.gz

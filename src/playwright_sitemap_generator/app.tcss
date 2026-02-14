@@ -1,0 +1,41 @@
+/* Playwright Sitemap Generator - Textual CSS */
+
+Screen {
+    layout: vertical;
+}
+
+#main-container {
+    height: 1fr;
+    layout: horizontal;
+}
+
+#left-panel {
+    width: 65%;
+    height: 1fr;
+    layout: vertical;
+}
+
+#url-table {
+    height: 1fr;
+}
+
+#crawl-log {
+    height: 15;
+    min-height: 5;
+    max-height: 30;
+    border-top: solid $accent;
+    display: block;
+}
+
+#crawl-log.hidden {
+    display: none;
+}
+
+#stats-panel {
+    width: 35%;
+    height: 1fr;
+}
+
+#summary {
+    height: auto;
+}
