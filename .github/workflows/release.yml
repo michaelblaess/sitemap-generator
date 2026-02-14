@@ -16,7 +16,7 @@ jobs:
           - os: windows-latest
             artifact: playwright-sitemap-generator-windows
             ext: .zip
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             artifact: playwright-sitemap-generator-linux
             ext: .tar.gz
           - os: macos-latest
