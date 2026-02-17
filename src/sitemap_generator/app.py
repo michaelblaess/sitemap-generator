@@ -1,4 +1,4 @@
-"""Hauptanwendung fuer Playwright Sitemap Generator."""
+"""Hauptanwendung fuer Sitemap Generator."""
 
 from __future__ import annotations
 

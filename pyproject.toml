@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "playwright-sitemap-generator"
-version = "1.2.0"
-description = "Playwright-powered Sitemap Generator with TUI"
+name = "sitemap-generator"
+version = "1.3.0"
+description = "Sitemap Generator with TUI - crawls websites and generates sitemap.xml"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 dependencies = [
@@ -17,4 +17,4 @@ dependencies = [
 ]
 
 [project.scripts]
-playwright-sitemap-generator = "playwright_sitemap_generator.__main__:main"
+sitemap-generator = "sitemap_generator.__main__:main"

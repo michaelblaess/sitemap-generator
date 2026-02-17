@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 # Einstellungsdatei im User-Verzeichnis
-_SETTINGS_DIR = Path.home() / ".playwright-sitemap-generator"
+_SETTINGS_DIR = Path.home() / ".sitemap-generator"
 _SETTINGS_FILE = _SETTINGS_DIR / "settings.json"
 
 

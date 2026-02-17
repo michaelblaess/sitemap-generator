@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Playwright Sitemap Generator - One-Line Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/michaelblaess/playwright-sitemap-generator/main/install.sh | bash
+# Sitemap Generator - One-Line Installer
+# Usage: curl -fsSL https://raw.githubusercontent.com/michaelblaess/sitemap-generator/main/install.sh | bash
 set -e
 
-REPO="michaelblaess/playwright-sitemap-generator"
-INSTALL_DIR="$HOME/.playwright-sitemap-generator"
+REPO="michaelblaess/sitemap-generator"
+INSTALL_DIR="$HOME/.sitemap-generator"
 BIN_DIR="$HOME/.local/bin"
 
-echo "=== Playwright Sitemap Generator - Installer ==="
+echo "=== Sitemap Generator - Installer ==="
 echo ""
 
 # OS und Architektur erkennen
@@ -62,15 +62,15 @@ if [ -n "$SUBDIR" ]; then
 fi
 
 # Executable finden und ausfuehrbar machen
-chmod +x "$INSTALL_DIR/playwright-sitemap-generator" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/sitemap-generator" 2>/dev/null || true
 
 # Wrapper-Skript in ~/.local/bin
 mkdir -p "$BIN_DIR"
-cat > "$BIN_DIR/playwright-sitemap-generator" << 'WRAPPER'
+cat > "$BIN_DIR/sitemap-generator" << 'WRAPPER'
 #!/usr/bin/env bash
-exec "$HOME/.playwright-sitemap-generator/playwright-sitemap-generator" "$@"
+exec "$HOME/.sitemap-generator/sitemap-generator" "$@"
 WRAPPER
-chmod +x "$BIN_DIR/playwright-sitemap-generator"
+chmod +x "$BIN_DIR/sitemap-generator"
 
 echo ""
 echo "Installation abgeschlossen!"
@@ -85,4 +85,4 @@ if ! echo "$PATH" | tr ':' '\n' | grep -qx "$BIN_DIR"; then
     echo ""
 fi
 
-echo "Starten mit: playwright-sitemap-generator https://example.com"
+echo "Starten mit: sitemap-generator https://example.com"

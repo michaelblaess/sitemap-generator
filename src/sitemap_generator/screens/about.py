@@ -58,7 +58,7 @@ class AboutScreen(ModalScreen):
     def compose(self) -> ComposeResult:
         """Erstellt das About-Layout."""
         with Vertical():
-            yield Static(f"Playwright Sitemap Generator v{__version__}", id="about-title")
+            yield Static(f"Sitemap Generator v{__version__}", id="about-title")
             yield Static(
                 "Crawlt eine Website rekursiv und erzeugt eine\n"
                 "XML-Sitemap. Erkennt Dead Links (4xx/5xx),\n"
@@ -80,7 +80,7 @@ class AboutScreen(ModalScreen):
                 " unterzugehen.\"\n"
                 " - Martin Luther King Jr.[/dim italic]\n"
                 "\n"
-                "[dim]https://github.com/michaelblaess/playwright-sitemap-generator[/dim]",
+                "[dim]https://github.com/michaelblaess/sitemap-generator[/dim]",
                 id="about-content",
             )
             yield Static("ESC = Schliessen", id="about-footer")

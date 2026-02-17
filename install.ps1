@@ -1,11 +1,11 @@
-# Playwright Sitemap Generator - Windows Installer
-# Usage: irm https://raw.githubusercontent.com/michaelblaess/playwright-sitemap-generator/main/install.ps1 | iex
+# Sitemap Generator - Windows Installer
+# Usage: irm https://raw.githubusercontent.com/michaelblaess/sitemap-generator/main/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
-$Repo = "michaelblaess/playwright-sitemap-generator"
-$InstallDir = "$env:LOCALAPPDATA\playwright-sitemap-generator"
+$Repo = "michaelblaess/sitemap-generator"
+$InstallDir = "$env:LOCALAPPDATA\sitemap-generator"
 
-Write-Host "=== Playwright Sitemap Generator - Installer ===" -ForegroundColor Cyan
+Write-Host "=== Sitemap Generator - Installer ===" -ForegroundColor Cyan
 Write-Host ""
 
 # Neuestes Release von GitHub holen
@@ -32,7 +32,7 @@ New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
 
 # Herunterladen
 Write-Host "Lade herunter..."
-$TmpFile = Join-Path $env:TEMP "psg-installer.zip"
+$TmpFile = Join-Path $env:TEMP "sg-installer.zip"
 Invoke-WebRequest -Uri $Asset.browser_download_url -OutFile $TmpFile
 
 # Entpacken
@@ -59,6 +59,6 @@ if ($UserPath -notlike "*$InstallDir*") {
 Write-Host ""
 Write-Host "Installation abgeschlossen!" -ForegroundColor Green
 Write-Host ""
-Write-Host "Starten mit: playwright-sitemap-generator https://example.com"
+Write-Host "Starten mit: sitemap-generator https://example.com"
 Write-Host ""
 Write-Host "HINWEIS: Neues Terminal oeffnen damit PATH-Aenderung wirkt." -ForegroundColor Yellow

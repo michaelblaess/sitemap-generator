@@ -5,4 +5,4 @@ if not exist ".venv" (
     pause
     exit /b 1
 )
-.venv\Scripts\python.exe -m playwright_sitemap_generator %*
+.venv\Scripts\python.exe -m sitemap_generator %*

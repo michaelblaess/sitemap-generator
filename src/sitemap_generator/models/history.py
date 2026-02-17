@@ -1,7 +1,7 @@
-"""History-Modell fuer Playwright Sitemap Generator.
+"""History-Modell fuer Sitemap Generator.
 
 Speichert und laedt vergangene Crawl-Konfigurationen aus
-~/.playwright-sitemap-generator/history.json.
+~/.sitemap-generator/history.json.
 """
 
 from __future__ import annotations
@@ -132,13 +132,13 @@ class HistoryEntry:
 
 
 class History:
-    """Verwaltet die Crawl-History in ~/.playwright-sitemap-generator/history.json.
+    """Verwaltet die Crawl-History in ~/.sitemap-generator/history.json.
 
     Stellt statische Methoden zum Laden, Speichern und Hinzufuegen
     von History-Eintraegen bereit.
     """
 
-    HISTORY_DIR = Path.home() / ".playwright-sitemap-generator"
+    HISTORY_DIR = Path.home() / ".sitemap-generator"
     HISTORY_FILE = HISTORY_DIR / "history.json"
     MAX_ENTRIES = 50
 

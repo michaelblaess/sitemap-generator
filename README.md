@@ -1,4 +1,4 @@
-# Playwright Sitemap Generator
+# Sitemap Generator
 
 Crawlt Websites und generiert standardkonforme `sitemap.xml` Dateien. Nutzt [Playwright](https://playwright.dev/) fuer JavaScript-Rendering oder [httpx](https://www.python-httpx.org/) fuer schnelles HTTP-Crawling.
 
@@ -10,37 +10,37 @@ Crawls websites and generates standard-compliant `sitemap.xml` files. Uses [Play
 
 **Linux / macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/michaelblaess/playwright-sitemap-generator/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/michaelblaess/sitemap-generator/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/michaelblaess/playwright-sitemap-generator/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/michaelblaess/sitemap-generator/main/install.ps1 | iex
 ```
 
 ## Verwendung / Usage
 
 ```bash
 # Einfach crawlen (httpx-Modus, schnell)
-playwright-sitemap-generator https://example.com
+sitemap-generator https://example.com
 
 # Mit JavaScript-Rendering (Playwright)
-playwright-sitemap-generator https://example.com --render
+sitemap-generator https://example.com --render
 
 # Sitemap direkt speichern
-playwright-sitemap-generator https://example.com --output sitemap.xml
+sitemap-generator https://example.com --output sitemap.xml
 
 # Crawl-Tiefe begrenzen
-playwright-sitemap-generator https://example.com --max-depth 5
+sitemap-generator https://example.com --max-depth 5
 
 # Mehr Parallelitaet
-playwright-sitemap-generator https://example.com --concurrency 16
+sitemap-generator https://example.com --concurrency 16
 
 # robots.txt ignorieren
-playwright-sitemap-generator https://example.com --ignore-robots
+sitemap-generator https://example.com --ignore-robots
 
 # Mit Cookies (z.B. fuer Login)
-playwright-sitemap-generator https://example.com --cookie session=abc123
+sitemap-generator https://example.com --cookie session=abc123
 ```
 
 ## CLI-Parameter
@@ -106,8 +106,8 @@ playwright-sitemap-generator https://example.com --cookie session=abc123
 ### Setup
 
 ```bash
-git clone https://github.com/michaelblaess/playwright-sitemap-generator.git
-cd playwright-sitemap-generator
+git clone https://github.com/michaelblaess/sitemap-generator.git
+cd sitemap-generator
 
 # Windows
 setup-dev-environment.bat
@@ -129,8 +129,8 @@ run.bat https://example.com
 ### Release erstellen
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.3.0
+git push origin v1.3.0
 ```
 
 GitHub Actions baut automatisch Executables fuer Windows, Linux und macOS.

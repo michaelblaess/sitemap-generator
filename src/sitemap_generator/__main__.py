@@ -1,4 +1,4 @@
-"""Entry Point fuer Playwright Sitemap Generator."""
+"""Entry Point fuer Sitemap Generator."""
 
 from __future__ import annotations
 
@@ -15,23 +15,23 @@ if getattr(sys, "frozen", False):
     if os.path.isdir(_browsers_dir):
         os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _browsers_dir
 
-from playwright_sitemap_generator import __version__
-from playwright_sitemap_generator.app import SitemapGeneratorApp
+from sitemap_generator import __version__
+from sitemap_generator.app import SitemapGeneratorApp
 
 
 BANNER = f"""
-  Playwright Sitemap Generator v{__version__}
+  Sitemap Generator v{__version__}
   Crawlt Websites und generiert standardkonforme sitemap.xml Dateien
 """
 
 USAGE_EXAMPLES = """
 Beispiele:
-  playwright-sitemap-generator https://example.com
-  playwright-sitemap-generator https://example.com --render
-  playwright-sitemap-generator https://example.com --max-depth 5 --concurrency 16
-  playwright-sitemap-generator https://example.com --output sitemap.xml
-  playwright-sitemap-generator https://example.com --ignore-robots
-  playwright-sitemap-generator https://example.com --cookie auth=token123
+  sitemap-generator https://example.com
+  sitemap-generator https://example.com --render
+  sitemap-generator https://example.com --max-depth 5 --concurrency 16
+  sitemap-generator https://example.com --output sitemap.xml
+  sitemap-generator https://example.com --ignore-robots
+  sitemap-generator https://example.com --cookie auth=token123
 
 Tastenkuerzel in der TUI:
   s = Crawl starten    x = Crawl abbrechen    r = Sitemap speichern
@@ -43,7 +43,7 @@ Tastenkuerzel in der TUI:
 def main() -> None:
     """Haupteinstiegspunkt fuer die CLI."""
     parser = argparse.ArgumentParser(
-        prog="playwright-sitemap-generator",
+        prog="sitemap-generator",
         description=BANNER,
         epilog=USAGE_EXAMPLES,
         formatter_class=argparse.RawDescriptionHelpFormatter,
