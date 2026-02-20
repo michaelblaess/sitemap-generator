@@ -60,6 +60,7 @@ class CrawlResult:
     load_time_ms: float = 0
     last_modified: str = ""        # from HTTP Last-Modified header
     links_found: int = 0           # number of internal links found on page
+    has_form: bool = False          # page contains <form> element(s)
     error_message: str = ""
     redirect_url: str = ""             # final URL after redirect(s)
     referring_pages: list[dict] = field(default_factory=list)

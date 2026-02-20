@@ -51,6 +51,7 @@ class SitemapGeneratorApp(App):
         Binding("h", "show_history", "History"),
         Binding("e", "toggle_errors", "Nur Fehler"),
         Binding("j", "jira_report", "JIRA-Tabelle"),
+        Binding("g", "save_forms", "Formulare"),
         Binding("b", "show_tree", "Seitenbaum"),
         Binding("f", "sitemap_diff", "Sitemap-Diff"),
         Binding("d", "copy_detail", "Details kopieren"),
@@ -583,6 +584,26 @@ class SitemapGeneratorApp(App):
         self._write_log(f"[green]JIRA-Tabelle kopiert ({error_count} Fehler)[/green]")
         self.notify(f"JIRA-Tabelle kopiert ({error_count} Fehler)")
 
+    def action_save_forms(self) -> None:
+        """Exportiert alle Seiten mit Formularen als JSON-Datei."""
+        if not self._results:
+            self.notify("Keine Ergebnisse vorhanden!", severity="warning")
+            return
+
+        form_pages = [r for r in self._results if r.has_form and r.http_status_code == 200]
+        if not form_pages:
+            self._write_log("[green]Keine Formulare gefunden - kein Export noetig.[/green]")
+            self.notify("Keine Formulare gefunden!", severity="information")
+            return
+
+        timestamp = datetime.now().strftime("%Y-%m-%d")
+        hostname = urlparse(self.start_url).hostname or "unknown"
+        filename = f"formulare_{hostname}_{timestamp}.json"
+
+        Reporter.save_forms_report(self._results, self.start_url, filename)
+        self._write_log(f"[green]Formular-Report geschrieben: {filename} ({len(form_pages)} Seiten)[/green]")
+        self.notify(f"Formulare: {filename} ({len(form_pages)} Seiten)")
+
     def action_show_tree(self) -> None:
         """Zeigt den Seitenbaum-Dialog an."""
         if not self._results:
@@ -719,7 +740,7 @@ class SitemapGeneratorApp(App):
             return True if self._results else None
         if action == "toggle_errors":
             return True if self._results else None
-        if action in ("jira_report", "show_tree", "copy_detail"):
+        if action in ("jira_report", "show_tree", "copy_detail", "save_forms"):
             return True if self._results else None
         if action == "sitemap_diff":
             return True if self._results and self._official_sitemap_urls else None

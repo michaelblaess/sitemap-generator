@@ -63,10 +63,20 @@ sitemap-generator https://example.com --cookie session=abc123
 | Taste | Funktion |
 |---|---|
 | `s` | Crawl starten |
-| `x` | Crawl abbrechen |
-| `r` | Sitemap speichern |
+| `x` | Crawl abbrechen / JSON-Fehlerbericht |
+| `m` | Sitemap speichern |
+| `g` | Formular-Report exportieren (JSON) |
+| `j` | JIRA-Tabelle in Zwischenablage |
+| `e` | Nur Fehler anzeigen |
+| `b` | Seitenbaum |
+| `f` | Sitemap-Diff |
+| `d` | URL-Details kopieren |
+| `c` | Log kopieren |
 | `l` | Log ein/aus |
 | `+` / `-` | Log vergroessern/verkleinern |
+| `h` | History |
+| `o` | robots.txt AN/AUS |
+| `p` | Playwright AN/AUS |
 | `i` | Info-Dialog |
 | `q` | Beenden |
 
@@ -78,6 +88,7 @@ sitemap-generator https://example.com --cookie session=abc123
 - **Priority**: Automatisch basierend auf Crawl-Tiefe (Startseite = 1.0)
 - **lastmod**: Aus HTTP Last-Modified Header
 - **URL-Normalisierung**: Duplikate durch Normalisierung vermieden
+- **Formular-Erkennung**: `<form>`-Tags werden erkannt, in der Tabelle markiert und als JSON exportierbar
 - **Live-TUI**: Fortschritt, Statistiken und URL-Details in Echtzeit
 
 ## Browser-Strategie
@@ -129,8 +140,8 @@ run.bat https://example.com
 ### Release erstellen
 
 ```bash
-git tag v1.3.0
-git push origin v1.3.0
+git tag v1.4.0
+git push origin v1.4.0
 ```
 
 GitHub Actions baut automatisch Executables fuer Windows, Linux und macOS.

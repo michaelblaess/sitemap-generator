@@ -58,7 +58,7 @@ class UrlTable(Static):
         yield Static("", id="results-count")
         yield Input(placeholder="Filter (URL, Status...)", id="filter-bar")
         table = DataTable(id="url-data", cursor_type="row")
-        table.add_columns("#", "Status", "HTTP", "Tiefe", "Links", "Zeit", "URL")
+        table.add_columns("#", "Status", "HTTP", "Tiefe", "Links", "Formular (?)", "Zeit", "URL")
         yield table
 
     def on_mount(self) -> None:
@@ -168,10 +168,13 @@ class UrlTable(Static):
         if self._filter_text:
             search = self._filter_text.lower()
             label, _ = result.status_label
+            # "form" als Suchbegriff matcht Seiten mit Formularen
+            form_match = result.has_form if search == "form" else False
             if (
                 search not in result.url.lower()
                 and search not in label.lower()
                 and search not in str(result.http_status_code)
+                and not form_match
             ):
                 return False
         return True
@@ -190,12 +193,14 @@ class UrlTable(Static):
         for result in self._filtered:
             self._row_counter += 1
             url_cell = self._url_cell(result)
+            form_cell = Text("JA", style="green") if result.has_form else Text("-", style="dim")
             table.add_row(
                 str(self._row_counter),
                 self._status_cell(result),
                 self._http_status_cell(result.http_status_code),
                 str(result.depth),
                 str(result.links_found) if result.links_found else "-",
+                form_cell,
                 f"{result.load_time_ms:.0f}ms" if result.load_time_ms else "-",
                 url_cell,
                 key=result.url,

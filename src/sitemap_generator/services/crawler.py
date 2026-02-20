@@ -467,6 +467,7 @@ class Crawler:
         else:
             base_url = url
         soup = BeautifulSoup(response.text, "lxml")
+        result.has_form = bool(soup.find("form"))
         return self._extract_links(soup, base_url)
 
     async def _fetch_with_playwright(self, url: str, result: CrawlResult) -> list[tuple[str, str]]:
@@ -503,6 +504,11 @@ class Crawler:
                         return []
                 else:
                     result.http_status_code = response.status
+
+            # Form-Erkennung im gerenderten DOM
+            result.has_form = await page.evaluate(
+                "() => document.querySelectorAll('form').length > 0"
+            )
 
             # Links mit Text aus dem gerenderten DOM extrahieren
             links_data = await page.evaluate(

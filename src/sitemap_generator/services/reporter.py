@@ -72,6 +72,38 @@ class Reporter:
         return output_path
 
     @staticmethod
+    def save_forms_report(
+        results: list[CrawlResult],
+        start_url: str,
+        output_path: str,
+    ) -> str:
+        """Erzeugt und speichert einen JSON-Report aller Seiten mit Formularen.
+
+        Filtert nur Seiten mit has_form == True und HTTP 200.
+
+        Args:
+            results: Alle Crawl-Ergebnisse.
+            start_url: Start-URL des Crawls.
+            output_path: Pfad fuer die JSON-Datei.
+
+        Returns:
+            Pfad der geschriebenen Datei.
+        """
+        form_urls = [
+            r.url for r in results
+            if r.has_form and r.http_status_code == 200
+        ]
+
+        report = {
+            "urls": sorted(form_urls),
+        }
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
+
+        return output_path
+
+    @staticmethod
     def generate_jira_table(results: list[CrawlResult], start_url: str) -> str:
         """Erzeugt eine JIRA-Wiki-Markup-Tabelle mit allen Fehler-URLs.
 

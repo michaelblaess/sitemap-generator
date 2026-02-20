@@ -157,6 +157,9 @@ class StatsPanel(Static):
             "Ladezeit",
             f"{result.load_time_ms:.0f}ms" if result.load_time_ms else "-",
         ))
+        form_value = "Ja" if result.has_form else "Nein"
+        form_style = "green" if result.has_form else "dim"
+        renderables.append(self._detail_line("Formular", form_value, form_style))
 
         if result.content_type:
             renderables.append(self._detail_line("Content-Type", result.content_type))
