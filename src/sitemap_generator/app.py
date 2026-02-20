@@ -13,6 +13,8 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, RichLog
 
+from textual_themes import register_all
+
 from . import __version__
 from .models.crawl_result import CrawlResult, PageStatus
 from .models.history import History, HistoryEntry
@@ -73,6 +75,9 @@ class SitemapGeneratorApp(App):
         cookies: list[dict[str, str]] | None = None,
     ) -> None:
         super().__init__()
+
+        # Retro-Themes registrieren (C64, Amiga, Atari ST, IBM Terminal, NeXTSTEP, BeOS)
+        register_all(self)
 
         # Persistierte Einstellungen laden
         self._settings = Settings.load()
