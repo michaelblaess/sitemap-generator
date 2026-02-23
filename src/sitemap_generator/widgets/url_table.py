@@ -201,7 +201,7 @@ class UrlTable(Static):
                 str(result.depth),
                 str(result.links_found) if result.links_found else "-",
                 form_cell,
-                f"{result.load_time_ms:.0f}ms" if result.load_time_ms else "-",
+                f"{result.load_time_ms / 1000:.1f}s" if result.load_time_ms else "-",
                 url_cell,
                 key=result.url,
             )
