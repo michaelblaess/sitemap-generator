@@ -36,6 +36,9 @@ class UrlTable(Static):
     }
     """
 
+    # Tasten bei denen Auto-Scroll deaktiviert wird (manuelle Navigation)
+    _NAV_KEYS = {"up", "down", "pageup", "pagedown", "home", "end"}
+
     class UrlHighlighted(Message):
         """Wird gesendet wenn eine URL in der Tabelle markiert wird."""
         def __init__(self, result: CrawlResult) -> None:
@@ -46,23 +49,28 @@ class UrlTable(Static):
         super().__init__(**kwargs)
         self._results: list[CrawlResult] = []
         self._filtered: list[CrawlResult] = []
+        self._col_keys: list = []
         self._show_only_errors: bool = False
         self._filter_text: str = ""
         self._row_counter: int = 0
         self._spinner_frame: int = 0
         self._spinner_timer = None
         self._sitemap_urls: set[str] = set()
+        self._auto_scroll: bool = True
+        self._auto_scroll_row: int = -1
 
     def compose(self) -> ComposeResult:
         """Erstellt die DataTable mit Filter-Eingabe."""
         yield Static("", id="results-count")
         yield Input(placeholder="Filter (URL, Status...)", id="filter-bar")
-        table = DataTable(id="url-data", cursor_type="row")
-        table.add_columns("#", "Status", "HTTP", "Tiefe", "Links", "Formular (?)", "Zeit", "URL")
-        yield table
+        yield DataTable(id="url-data", cursor_type="row")
 
     def on_mount(self) -> None:
-        """Startet den Spinner-Timer."""
+        """Initialisiert die Tabellenspalten und startet den Spinner-Timer."""
+        table = self.query_one("#url-data", DataTable)
+        self._col_keys = table.add_columns(
+            "#", "Status", "HTTP", "Tiefe", "Links", "Formular (?)", "Zeit", "URL",
+        )
         self._spinner_timer = self.set_interval(0.3, self._tick_spinner)
 
     def on_input_changed(self, event: Input.Changed) -> None:
@@ -76,14 +84,19 @@ class UrlTable(Static):
             self._apply_filter()
 
     def _tick_spinner(self) -> None:
-        """Aktualisiert den Spinner-Frame und refresht die Tabelle wenn noetig."""
+        """Aktualisiert den Spinner-Frame der CRAWLING-Zeilen in-place."""
         has_crawling = any(
             r.status == PageStatus.CRAWLING for r in self._filtered
         )
         if not has_crawling:
             return
         self._spinner_frame = (self._spinner_frame + 1) % len(SPINNER_FRAMES)
-        self._refresh_table()
+        table = self.query_one("#url-data", DataTable)
+        for idx, result in enumerate(self._filtered):
+            if result.status == PageStatus.CRAWLING:
+                table.update_cell(
+                    result.url, self._col_keys[1], self._status_cell(result),
+                )
 
     def _status_cell(self, result: CrawlResult) -> Text:
         """Erzeugt eine farbcodierte Zelle fuer den Status.
@@ -184,9 +197,32 @@ class UrlTable(Static):
         self._filtered = [r for r in self._results if self._matches_filter(r)]
         self._refresh_table()
 
+    def _update_row_cells(self, table: DataTable, result: CrawlResult) -> None:
+        """Aktualisiert alle Zellen einer Zeile in-place.
+
+        Args:
+            table: Die DataTable-Instanz.
+            result: Das aktualisierte CrawlResult.
+        """
+        row_key = result.url
+        form_cell = Text("JA", style="green") if result.has_form else Text("-", style="dim")
+        table.update_cell(row_key, self._col_keys[1], self._status_cell(result))
+        table.update_cell(row_key, self._col_keys[2], self._http_status_cell(result.http_status_code))
+        table.update_cell(row_key, self._col_keys[3], str(result.depth))
+        table.update_cell(row_key, self._col_keys[4], str(result.links_found) if result.links_found else "-")
+        table.update_cell(row_key, self._col_keys[5], form_cell)
+        table.update_cell(row_key, self._col_keys[6], f"{result.load_time_ms / 1000:.1f}s" if result.load_time_ms else "-")
+        table.update_cell(row_key, self._col_keys[7], self._url_cell(result))
+
     def _refresh_table(self) -> None:
-        """Aktualisiert die DataTable mit gefilterten Ergebnissen."""
+        """Baut die DataTable komplett neu auf (clear + rebuild).
+
+        Wird nur bei strukturellen Aenderungen verwendet (load_results,
+        Filter-Wechsel).  Waehrend des Crawls nutzt update_result()
+        stattdessen _update_row_cells() fuer in-place Updates.
+        """
         table = self.query_one("#url-data", DataTable)
+        saved_row = table.cursor_row
         table.clear()
         self._row_counter = 0
 
@@ -206,6 +242,17 @@ class UrlTable(Static):
                 key=result.url,
             )
 
+        # Cursor wiederherstellen
+        if self._auto_scroll and 0 <= self._auto_scroll_row < len(self._filtered):
+            target_row = self._auto_scroll_row
+        elif saved_row >= 0 and len(self._filtered) > 0:
+            target_row = min(saved_row, len(self._filtered) - 1)
+        else:
+            target_row = -1
+
+        if target_row >= 0:
+            table.move_cursor(row=target_row)
+
         self._update_count_label()
 
     def _update_count_label(self) -> None:
@@ -224,6 +271,8 @@ class UrlTable(Static):
         self._filtered.clear()
         self._row_counter = 0
         self._filter_text = ""
+        self._auto_scroll = True
+        self._auto_scroll_row = -1
         table = self.query_one("#url-data", DataTable)
         table.clear()
         self._update_count_label()
@@ -231,23 +280,90 @@ class UrlTable(Static):
     def load_results(self, results: list[CrawlResult]) -> None:
         """Laedt alle Ergebnisse in die Tabelle.
 
+        Setzt Auto-Scroll zurueck, damit beim naechsten Crawl
+        automatisch zur aktuellen Zeile gescrollt wird.
+
         Args:
             results: Liste der CrawlResults.
         """
         self._results = results
+        self._auto_scroll = True
+        self._auto_scroll_row = -1
         self._apply_filter()
 
     def update_result(self, result: CrawlResult) -> None:
         """Aktualisiert eine einzelne Zeile in der Tabelle.
 
+        Aktualisiert Zellen in-place (kein clear/rebuild), damit die
+        Scroll-Position erhalten bleibt.  Bei aktivem Filter wird
+        ein vollstaendiger Rebuild durchgefuehrt falls sich die
+        Tabellenstruktur aendern koennte.
+
         Args:
             result: Das aktualisierte CrawlResult.
         """
-        # Result in Gesamtliste aufnehmen
-        if result not in self._results:
+        is_new = result not in self._results
+        if is_new:
             self._results.append(result)
 
-        self._apply_filter()
+        if self._show_only_errors or self._filter_text:
+            # Filter aktiv - Struktur koennte sich aendern
+            self._filtered = [r for r in self._results if self._matches_filter(r)]
+            if self._auto_scroll:
+                self._scroll_to_result(result)
+            self._refresh_table()
+            return
+
+        # Kein Filter aktiv
+        if is_new:
+            # Neue Zeile hinzufuegen (kein clear/rebuild)
+            self._filtered.append(result)
+            self._row_counter += 1
+            table = self.query_one("#url-data", DataTable)
+            form_cell = Text("JA", style="green") if result.has_form else Text("-", style="dim")
+            table.add_row(
+                str(self._row_counter),
+                self._status_cell(result),
+                self._http_status_cell(result.http_status_code),
+                str(result.depth),
+                str(result.links_found) if result.links_found else "-",
+                form_cell,
+                f"{result.load_time_ms / 1000:.1f}s" if result.load_time_ms else "-",
+                self._url_cell(result),
+                key=result.url,
+            )
+        else:
+            # Bestehende Zeile in-place aktualisieren
+            table = self.query_one("#url-data", DataTable)
+            self._update_row_cells(table, result)
+
+        if self._auto_scroll:
+            try:
+                idx = self._filtered.index(result)
+                if idx >= self._auto_scroll_row:
+                    self._auto_scroll_row = idx
+            except ValueError:
+                pass
+            table = self.query_one("#url-data", DataTable)
+            table.move_cursor(row=self._auto_scroll_row)
+
+        self._update_count_label()
+
+    def _scroll_to_result(self, result: CrawlResult) -> None:
+        """Merkt sich die Ziel-Zeile fuer Auto-Scroll.
+
+        Bei mehreren parallelen Crawl-Threads wird nur vorwaerts gescrollt,
+        damit der Cursor nicht zwischen aktiven Threads hin- und herspringt.
+
+        Args:
+            result: Das CrawlResult zu dem gescrollt werden soll.
+        """
+        try:
+            row = self._filtered.index(result)
+            if row >= self._auto_scroll_row:
+                self._auto_scroll_row = row
+        except ValueError:
+            pass
 
     def toggle_error_filter(self) -> bool:
         """Schaltet den Error-Filter um.
@@ -258,6 +374,15 @@ class UrlTable(Static):
         self._show_only_errors = not self._show_only_errors
         self._apply_filter()
         return self._show_only_errors
+
+    def on_key(self, event) -> None:
+        """Deaktiviert Auto-Scroll bei manueller Navigation.
+
+        Args:
+            event: Das Key-Event.
+        """
+        if event.key in self._NAV_KEYS:
+            self._auto_scroll = False
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Sendet ein UrlHighlighted-Event bei Cursor-Bewegung."""
