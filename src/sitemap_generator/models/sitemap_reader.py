@@ -2,11 +2,12 @@
 
 Findet die offizielle Sitemap einer Website automatisch und laedt alle
 enthaltenen URLs. Wird verwendet um gecrawlte URLs mit der offiziellen
-Sitemap abzugleichen.
+Sitemap abzugleichen. Kann auch lokale XML-Dateien einlesen.
 """
 
 from __future__ import annotations
 
+import os
 import xml.etree.ElementTree as ET
 from typing import Callable
 from urllib.parse import urlparse, urlunparse
@@ -188,6 +189,67 @@ async def _load_sitemap_recursive(
             urls.add(entry.text.strip())
 
     log(f"  Sitemap geladen: {len(url_entries)} URLs aus {sitemap_url}")
+
+
+def load_sitemap_from_file(
+    file_path: str,
+    log: Callable[[str], None] | None = None,
+) -> tuple[str, set[str]]:
+    """Laedt eine lokale Sitemap-XML-Datei und gibt Basis-URL + URLs zurueck.
+
+    Liest die XML-Datei, extrahiert alle <loc>-Eintraege und ermittelt die
+    gemeinsame Basis-URL aus den gefundenen URLs.
+
+    Args:
+        file_path: Pfad zur lokalen XML-Datei.
+        log: Optionale Log-Funktion.
+
+    Returns:
+        Tuple aus (basis_url, set_der_urls). Bei Fehler ("", leeres Set).
+    """
+    if log is None:
+        log = lambda msg: None
+
+    if not os.path.isfile(file_path):
+        log(f"  [red]Datei nicht gefunden: {file_path}[/red]")
+        return "", set()
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            xml_content = f.read()
+    except Exception as e:
+        log(f"  [red]Datei-Lesefehler: {e}[/red]")
+        return "", set()
+
+    try:
+        root = ET.fromstring(xml_content)
+    except ET.ParseError as e:
+        log(f"  [red]XML-Fehler: {e}[/red]")
+        return "", set()
+
+    # URLs extrahieren (mit und ohne Namespace)
+    url_entries = root.findall(f"{{{SITEMAP_NS}}}url/{{{SITEMAP_NS}}}loc")
+    if not url_entries:
+        url_entries = root.findall("url/loc")
+
+    urls: set[str] = set()
+    for entry in url_entries:
+        if entry.text:
+            urls.add(entry.text.strip())
+
+    if not urls:
+        log(f"  [yellow]Keine URLs in Datei gefunden[/yellow]")
+        return "", set()
+
+    # Basis-URL aus den URLs ermitteln (Schema + Domain der ersten URL)
+    first_url = next(iter(urls))
+    parsed = urlparse(first_url)
+    base_url = urlunparse((parsed.scheme, parsed.netloc, "/", "", "", ""))
+
+    log(f"  [green]{len(urls)} URLs aus Datei geladen[/green]")
+    log(f"  Basis-URL: {base_url}")
+
+    return base_url, urls
 
 
 async def _is_valid_sitemap(client: httpx.AsyncClient, url: str) -> bool:

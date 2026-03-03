@@ -21,7 +21,7 @@ from .models.history import History, HistoryEntry
 from .models.settings import Settings
 from .services.crawler import Crawler
 from .services.reporter import Reporter
-from .models.sitemap_reader import discover_sitemap, load_sitemap_urls
+from .models.sitemap_reader import discover_sitemap, load_sitemap_urls, load_sitemap_from_file
 from .models.sitemap_writer import SitemapWriter
 from .widgets.stats_panel import StatsPanel
 from .widgets.summary_panel import SummaryPanel
@@ -65,6 +65,7 @@ class SitemapGeneratorApp(App):
     def __init__(
         self,
         start_url: str = "",
+        sitemap_file: str = "",
         output_path: str = "",
         max_depth: int = 10,
         concurrency: int = 8,
@@ -84,6 +85,7 @@ class SitemapGeneratorApp(App):
         self._settings = Settings.load()
 
         self.start_url = start_url
+        self.sitemap_file = sitemap_file
         self.output_path = output_path
         self.max_depth = max_depth
         self.concurrency = concurrency
@@ -134,7 +136,13 @@ class SitemapGeneratorApp(App):
             f"robots.txt: {robots_info}"
         )
 
-        if self.start_url:
+        if self.sitemap_file:
+            import os
+            filename = os.path.basename(self.sitemap_file)
+            summary = self.query_one("#summary", SummaryPanel)
+            summary.set_info(f"Datei: {filename}", mode)
+            self.sub_title = filename
+        elif self.start_url:
             summary = self.query_one("#summary", SummaryPanel)
             summary.set_info(self.start_url, mode)
             self.sub_title = self.start_url
@@ -196,6 +204,23 @@ class SitemapGeneratorApp(App):
         if self._crawl_running:
             self.notify("Crawl laeuft bereits!", severity="warning")
             return
+
+        # Lokale Sitemap-Datei: URLs laden und start_url daraus ermitteln
+        if self.sitemap_file and not self.start_url:
+            self._write_log(f"\n[bold]Lade Sitemap aus Datei: {self.sitemap_file}[/bold]")
+            base_url, file_urls = load_sitemap_from_file(
+                self.sitemap_file, log=lambda msg: self._write_log(msg),
+            )
+            if not file_urls:
+                self.notify("Keine URLs in der Datei gefunden!", severity="error")
+                return
+            self.start_url = base_url
+            self._file_seed_urls = file_urls
+
+            # UI aktualisieren mit der ermittelten Basis-URL
+            summary = self.query_one("#summary", SummaryPanel)
+            mode = "Playwright" if self.render else "httpx (schnell)"
+            summary.set_info(self.start_url, mode)
 
         if not self.start_url:
             self.notify("Keine URL angegeben! Bitte URL als Parameter uebergeben.", severity="error")
@@ -293,6 +318,15 @@ class SitemapGeneratorApp(App):
                 self._write_log(
                     f"[green]{added} Sitemap-URLs als Seed-URLs hinzugefuegt[/green]"
                 )
+
+        # URLs aus lokaler Datei als Seed-URLs einspeisen
+        if hasattr(self, "_file_seed_urls") and self._file_seed_urls:
+            added = self._crawler.add_seed_urls(self._file_seed_urls)
+            if added:
+                self._write_log(
+                    f"[green]{added} URLs aus Datei als Seed-URLs hinzugefuegt[/green]"
+                )
+            self._file_seed_urls = set()  # Nach Verwendung leeren
 
         self.sub_title = f"Crawling {self.start_url}..."
 

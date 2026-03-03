@@ -32,6 +32,7 @@ Beispiele:
   sitemap-generator https://example.com --output sitemap.xml
   sitemap-generator https://example.com --ignore-robots
   sitemap-generator https://example.com --cookie auth=token123
+  sitemap-generator sitemap_example.xml --cookie auth=token123
 
 Tastenkuerzel in der TUI:
   s = Crawl starten    x = Crawl abbrechen    r = Sitemap speichern
@@ -54,7 +55,7 @@ def main() -> None:
         nargs="?",
         default="",
         metavar="URL",
-        help="Start-URL der Website (z.B. https://example.com)",
+        help="Start-URL der Website (z.B. https://example.com) oder Pfad zu einer Sitemap-XML-Datei",
     )
     parser.add_argument(
         "--output", "-o",
@@ -126,8 +127,16 @@ def main() -> None:
         name, value = cookie_str.split("=", 1)
         cookies.append({"name": name.strip(), "value": value.strip()})
 
+    # Pruefen ob das Argument eine lokale XML-Datei ist
+    sitemap_file = ""
+    start_url = args.url
+    if start_url and os.path.isfile(start_url) and start_url.lower().endswith(".xml"):
+        sitemap_file = os.path.abspath(start_url)
+        start_url = ""  # Wird aus der XML-Datei ermittelt
+
     app = SitemapGeneratorApp(
-        start_url=args.url,
+        start_url=start_url,
+        sitemap_file=sitemap_file,
         output_path=args.output,
         max_depth=args.max_depth,
         concurrency=args.concurrency,
