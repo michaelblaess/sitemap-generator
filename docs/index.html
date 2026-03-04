@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sitemap Generator — Websites crawlen, Sitemaps generieren</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/precision.css">
+  <style>
+    /* ── Page-specific: Screenshot Gallery ── */
+    .gallery {
+      padding: 0 32px 80px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .gallery-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .gallery-tab {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .gallery-tab:hover {
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+    }
+    .gallery-tab.active {
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      border-color: var(--border);
+    }
+
+    .gallery-frame {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-elevated);
+      background: #0c0c0c;
+    }
+
+    .gallery-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .gallery-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .gallery-dot.r { background: #ff5f57; }
+    .gallery-dot.y { background: #febc2e; }
+    .gallery-dot.g { background: #28c840; }
+    .gallery-bar-title {
+      flex: 1;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .gallery-img-wrap {
+      display: none;
+    }
+    .gallery-img-wrap.active {
+      display: block;
+    }
+
+    .gallery-img-wrap img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .gallery-caption {
+      padding: 12px 18px;
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      background: rgba(255,255,255,0.02);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Page-specific: CLI table ── */
+    .cli-table-wrap {
+      overflow-x: auto;
+      margin-top: 32px;
+    }
+
+    .cli-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .cli-table th {
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 12px 16px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .cli-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .cli-table tr:hover td {
+      background: var(--accent-subtle);
+    }
+
+    .cli-table code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--accent-muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .cli-table .default {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    /* ── Responsive gallery ── */
+    @media (max-width: 640px) {
+      .gallery { padding: 0 16px 48px; }
+      .gallery-tabs { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="header">
+    <div class="header-left">
+      <img src="https://michaelblaess.de/wp-content/uploads/2021/02/logo-micha5.png" alt="Michael Blaess" class="header-logo">
+      <div class="header-divider"></div>
+      <span class="header-repo">sitemap-generator</span>
+    </div>
+    <div class="header-right">
+      <a href="#features" class="header-link">Features</a>
+      <a href="#cli" class="header-link">CLI</a>
+      <a href="#install" class="header-link">Installation</a>
+      <a href="https://github.com/michaelblaess/sitemap-generator" class="header-link">GitHub</a>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Theme wechseln">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero">
+    <div class="hero-badge"><span class="dot"></span> Open Source TUI Tool · v1.4.2</div>
+    <h1>Sitemap<br><span class="accent">Generator</span></h1>
+    <p class="hero-description">Crawlt Websites und generiert standardkonforme <code style="font-family:var(--font-mono);font-size:0.9em;color:var(--accent);background:var(--accent-muted);padding:2px 6px;border-radius:4px;">sitemap.xml</code> Dateien — mit Live-TUI, Seitenbaum und Crawl-History direkt im Terminal.</p>
+    <div class="hero-actions">
+      <a href="https://github.com/michaelblaess/sitemap-generator" class="btn btn-primary">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub Repository
+      </a>
+      <a href="#install" class="btn btn-secondary">Installation</a>
+    </div>
+  </section>
+
+  <!-- ═══ SCREENSHOT GALLERY ═══ -->
+  <section class="gallery">
+    <div class="gallery-tabs">
+      <button class="gallery-tab active" onclick="showSlide(0)">Hauptansicht</button>
+      <button class="gallery-tab" onclick="showSlide(1)">Seitenbaum</button>
+      <button class="gallery-tab" onclick="showSlide(2)">Crawl-History</button>
+    </div>
+    <div class="gallery-frame">
+      <div class="gallery-bar">
+        <div class="gallery-dot r"></div>
+        <div class="gallery-dot y"></div>
+        <div class="gallery-dot g"></div>
+        <div class="gallery-bar-title">sitemap-generator</div>
+      </div>
+      <div class="gallery-img-wrap active" data-slide="0">
+        <img src="screenshots/01-main.png" alt="Sitemap Generator — Hauptansicht mit Crawl-Tabelle, Statistiken und Log">
+        <div class="gallery-caption">Hauptansicht — URL-Tabelle mit Status, HTTP-Code, Tiefe, Links und Live-Statistiken</div>
+      </div>
+      <div class="gallery-img-wrap" data-slide="1">
+        <img src="screenshots/02-sitemap.png" alt="Sitemap Generator — Seitenbaum-Ansicht">
+        <div class="gallery-caption">Seitenbaum — Hierarchische Darstellung aller gecrawlten URLs mit HTTP-Status</div>
+      </div>
+      <div class="gallery-img-wrap" data-slide="2">
+        <img src="screenshots/03-history.png" alt="Sitemap Generator — Crawl-History">
+        <div class="gallery-caption">Crawl-History — Vergangene Crawls mit Datum, URL und Parametern</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-line"></div></div>
+
+  <!-- ═══ FEATURES ═══ -->
+  <section class="section" id="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Was es kann</h2>
+    <p class="section-description">Ein vollwertiger Website-Crawler mit interaktiver Terminal-Oberfläche.</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Dual-Modus</h3>
+        <p>httpx für schnelles HTML-Crawling oder Playwright für JavaScript-Rendering — je nach Bedarf wechselbar.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <h3>Live-TUI</h3>
+        <p>Interaktive Terminal-Oberfläche mit Echtzeit-Fortschritt, URL-Tabelle, Statistiken und Tastenkürzel.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌳</div>
+        <h3>Seitenbaum</h3>
+        <p>Hierarchische Baumansicht aller gecrawlten URLs — mit HTTP-Status und aufklappbaren Pfaden.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>robots.txt</h3>
+        <p>Respektiert standardmäßig die robots.txt — mit Option zum Deaktivieren für autorisierte Analysen.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <h3>Tote Links erkennen</h3>
+        <p>Findet 404er und andere HTTP-Fehler automatisch beim Crawlen — inklusive der Quellseite, die den toten Link enthält.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Fehlerberichte</h3>
+        <p>Exportiert gefundene Fehler als JSON-Report oder JIRA-kompatible Tabelle — direkt in die Zwischenablage oder als Datei.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>Themes</h3>
+        <p>Anpassbare Farbthemen über <a href="https://github.com/michaelblaess/textual-themes" style="color:var(--accent)">textual-themes</a> — die TUI-Oberfläche lässt sich visuell individualisieren.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Auto-Split</h3>
+        <p>Bei über 50.000 URLs automatisch Sitemap-Index mit Teil-Sitemaps. Priority und lastmod werden automatisch gesetzt.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3>Formular-Erkennung</h3>
+        <p>Erkennt &lt;form&gt;-Tags auf jeder Seite, markiert sie in der Tabelle und exportiert sie als JSON.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-line"></div></div>
+
+  <!-- ═══ TECH STACK ═══ -->
+  <section class="section" id="stack">
+    <div class="section-label">Tech Stack</div>
+    <h2 class="section-title">Gebaut mit</h2>
+    <p class="section-description">Die Technologien hinter dem Projekt.</p>
+    <div class="tech-stack">
+      <div class="tech-badge">
+        <svg viewBox="0 0 24 24" fill="var(--text-tertiary)" width="18" height="18"><path d="M14.31.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.83l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.23l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l1.06.06H14.31zM9.69 23.82l-.9-.2-.73-.26-.59-.3-.45-.32-.34-.34-.25-.34-.16-.33-.1-.3-.04-.26-.02-.2.01-.13V15.5l.05-.63.13-.55.21-.46.26-.38.3-.31.33-.25.35-.19.35-.14.33-.1.3-.07.26-.04.21-.02h5.48l.69-.05.59-.14.5-.22.41-.27.33-.32.27-.35.2-.36.15-.37.1-.35.07-.32.04-.27.02-.21V7.94h3.09l.21.03.28.07.32.12.35.18.36.26.36.36.35.46.32.59.28.73.21.88.14 1.05.05 1.23-.06 1.22-.16 1.04-.24.87-.32.71-.36.57-.4.44-.42.33-.42.24-.4.16-.36.1-.32.05-.24.01h-.16L21 23.76H9.69z"/></svg>
+        Python 3
+      </div>
+      <div class="tech-badge">
+        <svg viewBox="0 0 24 24" fill="var(--text-tertiary)" width="18" height="18"><path d="M2 4v16h20V4H2zm2 2h16v12H4V6zm3 2v2h2V8H7zm4 0v2h2V8h-2zm4 0v2h2V8h-2zM5 12v2h2v-2H5zm4 0v2h2v-2H9zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zM7 16v2h10v-2H7z"/></svg>
+        Textual
+      </div>
+      <div class="tech-badge">
+        <svg viewBox="0 0 24 24" fill="var(--text-tertiary)" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        Playwright
+      </div>
+      <div class="tech-badge">
+        <svg viewBox="0 0 24 24" fill="var(--text-tertiary)" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Chromium
+      </div>
+      <div class="tech-badge">
+        <svg viewBox="0 0 24 24" fill="var(--text-tertiary)" width="18" height="18"><path d="M4.5 4.5v15h15v-15h-15zM3 3h18v18H3V3zm4.5 6h9v1.5h-9V9zm0 3h9v1.5h-9V12zm0 3h6v1.5h-6V15z"/></svg>
+        httpx
+      </div>
+      <div class="tech-badge">
+        <svg viewBox="0 0 24 24" fill="var(--text-tertiary)" width="18" height="18"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"/><path d="M8 14h8v1.5H8zm0 3h5v1.5H8z"/></svg>
+        BeautifulSoup
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-line"></div></div>
+
+  <!-- ═══ CLI PARAMETERS ═══ -->
+  <section class="section" id="cli">
+    <div class="section-label">CLI</div>
+    <h2 class="section-title">Parameter</h2>
+    <p class="section-description">Alle Optionen für die Kommandozeile.</p>
+    <div class="cli-table-wrap">
+      <table class="cli-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Beschreibung</th>
+            <th>Default</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>URL</code></td>
+            <td>Start-URL der Website</td>
+            <td class="default">—</td>
+          </tr>
+          <tr>
+            <td><code>--output</code> <code>-o</code></td>
+            <td>Ausgabe-Pfad für sitemap.xml</td>
+            <td class="default">sitemap_&lt;host&gt;.xml</td>
+          </tr>
+          <tr>
+            <td><code>--max-depth</code> <code>-d</code></td>
+            <td>Maximale Crawl-Tiefe</td>
+            <td class="default">10</td>
+          </tr>
+          <tr>
+            <td><code>--concurrency</code> <code>-c</code></td>
+            <td>Parallele Requests</td>
+            <td class="default">8</td>
+          </tr>
+          <tr>
+            <td><code>--timeout</code> <code>-t</code></td>
+            <td>Timeout pro Seite (Sekunden)</td>
+            <td class="default">30</td>
+          </tr>
+          <tr>
+            <td><code>--render</code></td>
+            <td>JavaScript mit Playwright rendern</td>
+            <td class="default">aus</td>
+          </tr>
+          <tr>
+            <td><code>--ignore-robots</code></td>
+            <td>robots.txt ignorieren</td>
+            <td class="default">aus</td>
+          </tr>
+          <tr>
+            <td><code>--cookie</code></td>
+            <td>Cookie setzen (NAME=VALUE, mehrfach)</td>
+            <td class="default">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-line"></div></div>
+
+  <!-- ═══ INSTALLATION ═══ -->
+  <section class="section" id="install">
+    <div class="section-label">Installation</div>
+    <h2 class="section-title">Schnellstart</h2>
+    <p class="section-description">One-Liner Installation — kein Python nötig.</p>
+    <div class="install-grid">
+      <div class="install-card">
+        <h4>Linux / macOS</h4>
+        <div class="install-cmd">curl -fsSL https://raw.githubusercontent.com/michaelblaess/sitemap-generator/main/install.sh | bash</div>
+      </div>
+      <div class="install-card">
+        <h4>Windows (PowerShell)</h4>
+        <div class="install-cmd">irm https://raw.githubusercontent.com/michaelblaess/sitemap-generator/main/install.ps1 | iex</div>
+      </div>
+    </div>
+    <div class="platforms">
+      <div class="platform">
+        <svg viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+        Windows
+      </div>
+      <div class="platform">
+        <svg viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.311.001-.465.003-.788.01-1.552.076-2.189.217-.636.141-1.147.365-1.541.672-.395.307-.674.697-.838 1.161-.164.464-.207.993-.131 1.572.076.578.27 1.195.578 1.837.308.641.728 1.3 1.249 1.958-.275.415-.506.86-.677 1.324-.17.463-.28.946-.312 1.434-.032.488.015.97.146 1.434.131.463.346.902.645 1.303-.7.485-1.261 1.049-1.665 1.666-.404.617-.651 1.285-.735 1.976-.084.691-.003 1.389.241 2.065.245.676.649 1.313 1.201 1.879-.326.614-.498 1.26-.507 1.912-.009.651.148 1.296.47 1.898.323.603.806 1.14 1.441 1.577.635.437 1.412.766 2.306.963.894.197 1.89.26 2.952.177 1.062-.083 2.076-.313 3.006-.684.93-.371 1.77-.886 2.486-1.523.715-.637 1.295-1.402 1.709-2.264.207-.43.371-.882.491-1.349.12-.466.194-.947.22-1.435.027-.488.005-.977-.067-1.461-.073-.484-.197-.957-.373-1.41.533-.456.957-.97 1.265-1.527.308-.557.498-1.157.562-1.783.064-.626-.001-1.266-.192-1.9-.191-.634-.509-1.245-.95-1.806.252-.64.387-1.312.398-1.995.012-.683-.101-1.363-.336-2.017-.235-.654-.591-1.268-1.06-1.81-.468-.543-1.046-.997-1.722-1.336-.676-.34-1.438-.556-2.266-.636-.829-.08-1.622-.021-2.36.168l-.016.004z"/></svg>
+        Linux
+      </div>
+      <div class="platform">
+        <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        macOS
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-line"></div></div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="footer">
+    <div class="footer-left">
+      <img src="https://michaelblaess.de/wp-content/uploads/2021/02/logo-micha5.png" alt="" class="footer-logo">
+      <span>Made by Michael Blaess · Apache License 2.0</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/michaelblaess">GitHub</a>
+      <a href="https://michaelblaess.de">Website</a>
+    </div>
+  </footer>
+
+  <script src="js/theme.js"></script>
+  <script>
+    /* Screenshot gallery tabs */
+    function showSlide(index) {
+      document.querySelectorAll('.gallery-tab').forEach((tab, i) => {
+        tab.classList.toggle('active', i === index);
+      });
+      document.querySelectorAll('.gallery-img-wrap').forEach((wrap, i) => {
+        wrap.classList.toggle('active', i === index);
+      });
+    }
+  </script>
+</body>
+</html>
