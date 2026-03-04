@@ -4,6 +4,17 @@ Crawlt Websites und generiert standardkonforme `sitemap.xml` Dateien. Nutzt [Pla
 
 Crawls websites and generates standard-compliant `sitemap.xml` files. Uses [Playwright](https://playwright.dev/) for JavaScript rendering or [httpx](https://www.python-httpx.org/) for fast HTTP crawling.
 
+## Screenshots
+
+### Hauptansicht
+![Hauptansicht](docs/screenshots/01-main.png)
+
+### Seitenbaum
+![Seitenbaum](docs/screenshots/02-sitemap.png)
+
+### Crawl-History
+![Crawl-History](docs/screenshots/03-history.png)
+
 ## Installation
 
 ### One-Liner (Standalone, kein Python noetig)
