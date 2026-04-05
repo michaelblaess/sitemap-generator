@@ -18,6 +18,7 @@ echo [2/3] Erstelle Executable...
     --onedir ^
     --console ^
     --add-data "src\sitemap_generator\app.tcss;sitemap_generator" ^
+    --add-data "src\sitemap_generator\locale;sitemap_generator\locale" ^
     --hidden-import sitemap_generator ^
     --hidden-import sitemap_generator.app ^
     --hidden-import sitemap_generator.models ^
