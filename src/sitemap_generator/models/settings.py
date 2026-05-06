@@ -11,6 +11,41 @@ _SETTINGS_DIR = Path.home() / ".sitemap-generator"
 _SETTINGS_FILE = _SETTINGS_DIR / "settings.json"
 
 
+# textual-themes 0.5 hat 25 Themes umbenannt (trademark-safety pass).
+# Settings-Files aelterer Versionen koennen alte Slugs gespeichert
+# haben — die werden beim Laden transparent gemappt.
+_LEGACY_THEME_MAP: dict[str, str] = {
+    "c64": "brotkasten",
+    "amiga": "boing",
+    "atari-st": "gemstone",
+    "ibm-terminal": "classic-terminal",
+    "nextstep": "next",
+    "beos": "bebox",
+    "ubuntu": "bunty",
+    "macos": "cupertino",
+    "windows-xp": "luna",
+    "msdos": "commandr",
+    "solaris-cde": "motif",
+    "os2-warp": "warp",
+    "opensuse": "geeko",
+    "linux-mint": "minty",
+    "red-hat": "crimson",
+    "raspberry-pi": "razzy",
+    "freebsd": "beastie",
+    "tudor": "fifty-eight",
+    "goldfinger": "goldfinder",
+    "hulk": "hulkula",
+    "batman": "flughund",
+    "gameboy": "brick",
+    "pan-am": "clipper",
+    "miami-vice": "miami",
+    "martini-racing": "racing",
+    "superman": "metropolis",
+    "spiderman": "spiderized",
+    "gulf-racing": "textual-dark",  # entferntes Theme -> Textual Default
+}
+
+
 class Settings:
     """Persistente Einstellungen (Theme etc.)."""
 
@@ -35,6 +70,9 @@ class Settings:
     def load(cls) -> Settings:
         """Laedt die Einstellungen oder gibt Defaults zurueck.
 
+        Migriert dabei alte Theme-Slugs aus textual-themes < 0.5 auf
+        ihre aktuellen Namen und persistiert die Migration.
+
         Returns:
             Settings-Instanz.
         """
@@ -48,4 +86,13 @@ class Settings:
                 settings.language = data.get("language", settings.language)
             except Exception:
                 pass
+
+        # Legacy-Theme-Slug migrieren
+        if settings.theme in _LEGACY_THEME_MAP:
+            settings.theme = _LEGACY_THEME_MAP[settings.theme]
+            try:
+                settings.save()
+            except Exception:
+                pass
+
         return settings
