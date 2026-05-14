@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 from rich.text import Text
-
 from textual.app import ComposeResult
 from textual.message import Message
 from textual.widgets import DataTable, Input, Static
 
 from ..i18n import t
 from ..models.crawl_result import CrawlResult, PageStatus
-
 
 # Spinner-Frames fuer CRAWLING-Status
 SPINNER_FRAMES = [">  ", ">> ", ">>>", " >>", "  >", "   "]
@@ -42,6 +40,7 @@ class UrlTable(Static):
 
     class UrlHighlighted(Message):
         """Wird gesendet wenn eine URL in der Tabelle markiert wird."""
+
         def __init__(self, result: CrawlResult) -> None:
             super().__init__()
             self.result = result
@@ -93,9 +92,7 @@ class UrlTable(Static):
 
     def _tick_spinner(self) -> None:
         """Aktualisiert den Spinner-Frame der CRAWLING-Zeilen in-place."""
-        has_crawling = any(
-            r.status == PageStatus.CRAWLING for r in self._filtered
-        )
+        has_crawling = any(r.status == PageStatus.CRAWLING for r in self._filtered)
         if not has_crawling:
             return
         self._spinner_frame = (self._spinner_frame + 1) % len(SPINNER_FRAMES)
@@ -103,7 +100,9 @@ class UrlTable(Static):
         for idx, result in enumerate(self._filtered):
             if result.status == PageStatus.CRAWLING:
                 table.update_cell(
-                    result.url, self._col_keys[1], self._status_cell(result),
+                    result.url,
+                    self._col_keys[1],
+                    self._status_cell(result),
                 )
 
     def _status_cell(self, result: CrawlResult) -> Text:
@@ -157,11 +156,7 @@ class UrlTable(Static):
         """
         if result.is_external_redirect:
             return Text(result.url, style="dim")
-        if (
-            self._sitemap_urls
-            and result.http_status_code == 200
-            and result.url not in self._sitemap_urls
-        ):
+        if self._sitemap_urls and result.http_status_code == 200 and result.url not in self._sitemap_urls:
             return Text(result.url, style="dark_orange")
         return result.url
 
@@ -219,7 +214,9 @@ class UrlTable(Static):
         table.update_cell(row_key, self._col_keys[3], str(result.depth))
         table.update_cell(row_key, self._col_keys[4], str(result.links_found) if result.links_found else "-")
         table.update_cell(row_key, self._col_keys[5], form_cell)
-        table.update_cell(row_key, self._col_keys[6], f"{result.load_time_ms / 1000:.1f}s" if result.load_time_ms else "-")
+        table.update_cell(
+            row_key, self._col_keys[6], f"{result.load_time_ms / 1000:.1f}s" if result.load_time_ms else "-"
+        )
         table.update_cell(row_key, self._col_keys[7], self._url_cell(result))
 
     def _refresh_table(self) -> None:

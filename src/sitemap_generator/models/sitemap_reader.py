@@ -9,14 +9,13 @@ from __future__ import annotations
 
 import os
 import xml.etree.ElementTree as ET
-from typing import Callable
+from collections.abc import Callable
 from urllib.parse import urlparse, urlunparse
 
 import httpx
 
 from ..i18n import t
 from .crawl_result import friendly_error_message
-
 
 # Standard-Namespace fuer Sitemaps
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -60,7 +59,7 @@ async def discover_sitemap(
     origin = urlunparse((parsed.scheme, parsed.netloc, "", "", "", ""))
 
     jar = httpx.Cookies()
-    for c in (cookies or []):
+    for c in cookies or []:
         jar.set(c["name"], c["value"])
 
     async with httpx.AsyncClient(
@@ -112,7 +111,7 @@ async def load_sitemap_urls(
         log = lambda msg: None
 
     jar = httpx.Cookies()
-    for c in (cookies or []):
+    for c in cookies or []:
         jar.set(c["name"], c["value"])
 
     urls: set[str] = set()
@@ -216,7 +215,7 @@ def load_sitemap_from_file(
         return "", set()
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             xml_content = f.read()
     except Exception as e:
         log(t("sitemap_reader.file_read_error", error=e))

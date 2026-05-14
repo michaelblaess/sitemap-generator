@@ -1,4 +1,5 @@
 """i18n — Einfache Internationalisierung ueber JSON-Sprachdateien."""
+
 from __future__ import annotations
 
 import json

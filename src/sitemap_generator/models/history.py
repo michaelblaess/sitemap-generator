@@ -207,6 +207,6 @@ class History:
 
         # Auf Maximum kuerzen
         if len(entries) > History.MAX_ENTRIES:
-            entries = entries[:History.MAX_ENTRIES]
+            entries = entries[: History.MAX_ENTRIES]
 
         History.save(entries)

@@ -5,28 +5,59 @@ from __future__ import annotations
 import asyncio
 import time
 from collections import deque
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable
-from urllib.parse import unquote, urljoin, urlparse, urlunparse, urldefrag, quote
+from urllib.parse import quote, unquote, urldefrag, urljoin, urlparse, urlunparse
 
 import httpx
 from bs4 import BeautifulSoup
-from playwright.async_api import async_playwright, Browser, Page
+from playwright.async_api import Browser, Page, async_playwright
 
 from ..i18n import t
-
 from ..models.crawl_result import CrawlResult, CrawlStats, PageStatus, friendly_error_message
 from ..models.robots import RobotsChecker
 
-
 # URL-Endungen die uebersprungen werden (keine HTML-Seiten)
 SKIP_EXTENSIONS = {
-    ".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".ico", ".bmp",
-    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
-    ".zip", ".rar", ".gz", ".tar", ".7z",
-    ".mp3", ".mp4", ".avi", ".mov", ".wmv", ".flv", ".webm",
-    ".css", ".js", ".json", ".xml", ".woff", ".woff2", ".ttf", ".eot",
-    ".exe", ".dmg", ".apk", ".msi",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".svg",
+    ".webp",
+    ".ico",
+    ".bmp",
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
+    ".zip",
+    ".rar",
+    ".gz",
+    ".tar",
+    ".7z",
+    ".mp3",
+    ".mp4",
+    ".avi",
+    ".mov",
+    ".wmv",
+    ".flv",
+    ".webm",
+    ".css",
+    ".js",
+    ".json",
+    ".xml",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+    ".exe",
+    ".dmg",
+    ".apk",
+    ".msi",
 }
 
 
@@ -155,9 +186,7 @@ class Crawler:
                     url, depth, parent = self._queue.popleft()
                     self._stats.queue_size = len(self._queue)
 
-                    task = asyncio.create_task(
-                        self._crawl_url(url, depth, parent, semaphore, on_result, log)
-                    )
+                    task = asyncio.create_task(self._crawl_url(url, depth, parent, semaphore, on_result, log))
                     active_tasks.add(task)
                     task.add_done_callback(active_tasks.discard)
 
@@ -231,10 +260,16 @@ class Crawler:
         normalized = self._normalize_url(url)
         parsed = urlparse(normalized)
         if parsed.scheme != self._scheme and parsed.netloc == self._allowed_domain:
-            normalized = urlunparse((
-                self._scheme, parsed.netloc, parsed.path,
-                parsed.params, parsed.query, "",
-            ))
+            normalized = urlunparse(
+                (
+                    self._scheme,
+                    parsed.netloc,
+                    parsed.path,
+                    parsed.params,
+                    parsed.query,
+                    "",
+                )
+            )
         return normalized
 
     def _track_referring_page(self, target_url: str, source_url: str, link_text: str) -> None:
@@ -392,8 +427,10 @@ class Crawler:
                     if normalized not in self._seen:
                         self._seen.add(normalized)
                         max_result = CrawlResult(
-                            url=normalized, depth=depth + 1,
-                            parent_url=url, status=PageStatus.MAX_DEPTH,
+                            url=normalized,
+                            depth=depth + 1,
+                            parent_url=url,
+                            status=PageStatus.MAX_DEPTH,
                         )
                         self._results[normalized] = max_result
                         self._stats.total_discovered += 1
@@ -461,11 +498,16 @@ class Crawler:
         if response.history:
             final_parsed = urlparse(str(response.url))
             orig_parsed = urlparse(url)
-            base_url = urlunparse((
-                orig_parsed.scheme, orig_parsed.netloc,
-                final_parsed.path, "",
-                final_parsed.query, "",
-            ))
+            base_url = urlunparse(
+                (
+                    orig_parsed.scheme,
+                    orig_parsed.netloc,
+                    final_parsed.path,
+                    "",
+                    final_parsed.query,
+                    "",
+                )
+            )
         else:
             base_url = url
         soup = BeautifulSoup(response.text, "lxml")
@@ -508,9 +550,7 @@ class Crawler:
                     result.http_status_code = response.status
 
             # Form-Erkennung im gerenderten DOM
-            result.has_form = await page.evaluate(
-                "() => document.querySelectorAll('form').length > 0"
-            )
+            result.has_form = await page.evaluate("() => document.querySelectorAll('form').length > 0")
 
             # Links mit Text aus dem gerenderten DOM extrahieren
             links_data = await page.evaluate(
@@ -524,11 +564,7 @@ class Crawler:
                 "}"
             )
 
-            return [
-                (item["href"], item.get("text", ""))
-                for item in links_data
-                if self._is_internal(item["href"])
-            ]
+            return [(item["href"], item.get("text", "")) for item in links_data if self._is_internal(item["href"])]
 
         finally:
             if page:

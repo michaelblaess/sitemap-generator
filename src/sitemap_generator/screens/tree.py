@@ -10,7 +10,6 @@ from collections import defaultdict, deque
 from urllib.parse import urlparse
 
 from rich.text import Text
-
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
@@ -200,11 +199,7 @@ class TreeScreen(ModalScreen):
             style = ""
 
         # Nicht in offizieller Sitemap: orange markiert (nur fuer 200er)
-        not_in_sitemap = (
-            self._sitemap_urls
-            and code == 200
-            and result.url not in self._sitemap_urls
-        )
+        not_in_sitemap = self._sitemap_urls and code == 200 and result.url not in self._sitemap_urls
 
         label = Text(f"{icon} ")
         label.append(f"[{code}]", style=style)
@@ -308,10 +303,7 @@ class TreeScreen(ModalScreen):
             visited: Bereits besuchte URLs (Zykluserkennung).
         """
         visited.add(url)
-        children = [
-            c for c in self._children.get(url, [])
-            if c not in visited
-        ]
+        children = [c for c in self._children.get(url, []) if c not in visited]
 
         for i, child_url in enumerate(children):
             is_last = i == len(children) - 1

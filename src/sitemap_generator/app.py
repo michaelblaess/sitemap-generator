@@ -12,7 +12,6 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, RichLog
-
 from textual_themes import register_all
 
 from . import __version__
@@ -20,14 +19,13 @@ from .i18n import t
 from .models.crawl_result import CrawlResult, PageStatus
 from .models.history import History, HistoryEntry
 from .models.settings import Settings
+from .models.sitemap_reader import discover_sitemap, load_sitemap_from_file, load_sitemap_urls
+from .models.sitemap_writer import SitemapWriter
 from .services.crawler import Crawler
 from .services.reporter import Reporter
-from .models.sitemap_reader import discover_sitemap, load_sitemap_urls, load_sitemap_from_file
-from .models.sitemap_writer import SitemapWriter
 from .widgets.stats_panel import StatsPanel
 from .widgets.summary_panel import SummaryPanel
 from .widgets.url_table import UrlTable
-
 
 # Log-Hoehe: min/max/default (Zeilen)
 LOG_HEIGHT_DEFAULT = 15
@@ -163,12 +161,19 @@ class SitemapGeneratorApp(App):
         robots_info = t("log.robots_on") if self.respect_robots else t("log.robots_off")
         self._write_log(t("log.version", version=__version__))
         self._write_log(
-            t("log.config", mode=mode, concurrency=self.concurrency,
-              timeout=self.timeout, max_depth=self.max_depth, robots=robots_info)
+            t(
+                "log.config",
+                mode=mode,
+                concurrency=self.concurrency,
+                timeout=self.timeout,
+                max_depth=self.max_depth,
+                robots=robots_info,
+            )
         )
 
         if self.sitemap_file:
             import os
+
             filename = os.path.basename(self.sitemap_file)
             summary = self.query_one("#summary", SummaryPanel)
             summary.set_info(f"{t('log.file_label', filename=filename)}", mode)
@@ -185,6 +190,7 @@ class SitemapGeneratorApp(App):
         # Focus auf Tabelle
         try:
             from textual.widgets import DataTable
+
             table = self.query_one("#url-data", DataTable)
             table.focus()
         except Exception:
@@ -196,9 +202,7 @@ class SitemapGeneratorApp(App):
         bindings_list = self._bindings.key_to_bindings.get("o", [])
         for i, binding in enumerate(bindings_list):
             if binding.action == "toggle_robots":
-                self._bindings.key_to_bindings["o"][i] = dataclasses.replace(
-                    binding, description=label
-                )
+                self._bindings.key_to_bindings["o"][i] = dataclasses.replace(binding, description=label)
                 break
         self.refresh_bindings()
 
@@ -208,9 +212,7 @@ class SitemapGeneratorApp(App):
         bindings_list = self._bindings.key_to_bindings.get("p", [])
         for i, binding in enumerate(bindings_list):
             if binding.action == "toggle_playwright":
-                self._bindings.key_to_bindings["p"][i] = dataclasses.replace(
-                    binding, description=label
-                )
+                self._bindings.key_to_bindings["p"][i] = dataclasses.replace(binding, description=label)
                 break
         self.refresh_bindings()
 
@@ -223,9 +225,7 @@ class SitemapGeneratorApp(App):
         bindings_list = self._bindings.key_to_bindings.get("x", [])
         for i, binding in enumerate(bindings_list):
             if binding.action == "action_x":
-                self._bindings.key_to_bindings["x"][i] = dataclasses.replace(
-                    binding, description=label
-                )
+                self._bindings.key_to_bindings["x"][i] = dataclasses.replace(binding, description=label)
                 break
         self.refresh_bindings()
 
@@ -240,7 +240,8 @@ class SitemapGeneratorApp(App):
         if self.sitemap_file and not self.start_url:
             self._write_log(t("log.load_sitemap_file", path=self.sitemap_file))
             base_url, file_urls = load_sitemap_from_file(
-                self.sitemap_file, log=lambda msg: self._write_log(msg),
+                self.sitemap_file,
+                log=lambda msg: self._write_log(msg),
             )
             if not file_urls:
                 self.notify(t("notify.no_urls_in_file"), severity="error")
@@ -276,16 +277,18 @@ class SitemapGeneratorApp(App):
         self._write_log(t("log.crawl_config", mode=mode, max_depth=self.max_depth, concurrency=self.concurrency))
 
         # History-Eintrag speichern
-        History.add(HistoryEntry(
-            url=self.start_url,
-            max_depth=self.max_depth,
-            concurrency=self.concurrency,
-            timeout=self.timeout,
-            render=self.render,
-            respect_robots=self.respect_robots,
-            user_agent=self.user_agent,
-            cookies=self.cookies,
-        ))
+        History.add(
+            HistoryEntry(
+                url=self.start_url,
+                max_depth=self.max_depth,
+                concurrency=self.concurrency,
+                timeout=self.timeout,
+                render=self.render,
+                respect_robots=self.respect_robots,
+                user_agent=self.user_agent,
+                cookies=self.cookies,
+            )
+        )
 
         self._crawler = Crawler(
             start_url=self.start_url,
@@ -318,6 +321,7 @@ class SitemapGeneratorApp(App):
         self._write_log(t("log.searching_sitemap"))
         try:
             from .models.robots import RobotsChecker
+
             robots = RobotsChecker()
             await robots.load(self.start_url, cookies=self.cookies)
             robots_sitemaps = robots.sitemaps if robots.is_loaded else []
@@ -330,11 +334,11 @@ class SitemapGeneratorApp(App):
             )
             if sitemap_url:
                 self._official_sitemap_urls = await load_sitemap_urls(
-                    sitemap_url, cookies=self.cookies, log=on_log,
+                    sitemap_url,
+                    cookies=self.cookies,
+                    log=on_log,
                 )
-                self._write_log(
-                    t("log.official_sitemap_loaded", count=len(self._official_sitemap_urls))
-                )
+                self._write_log(t("log.official_sitemap_loaded", count=len(self._official_sitemap_urls)))
         except Exception as e:
             self._write_log(t("log.sitemap_autodiscovery_failed", error=e))
 
@@ -381,10 +385,15 @@ class SitemapGeneratorApp(App):
         http_200 = [r for r in self._results if r.http_status_code == 200]
         self._write_log(t("log.crawl_complete", duration=stats.duration_display))
         self._write_log(
-            t("log.crawl_stats",
-              crawled=stats.total_crawled, s2xx=stats.total_2xx,
-              s3xx=stats.total_3xx, s4xx=stats.total_4xx,
-              s5xx=stats.total_5xx, sitemap=len(http_200))
+            t(
+                "log.crawl_stats",
+                crawled=stats.total_crawled,
+                s2xx=stats.total_2xx,
+                s3xx=stats.total_3xx,
+                s4xx=stats.total_4xx,
+                s5xx=stats.total_5xx,
+                sitemap=len(http_200),
+            )
         )
 
         if stats.urls_per_second > 0:
@@ -434,9 +443,12 @@ class SitemapGeneratorApp(App):
 
         # Stats vom letzten Crawl holen
         from .models.crawl_result import CrawlStats
+
         stats = CrawlStats()
         # Stats aus den Ergebnissen rekonstruieren
-        stats.total_crawled = len([r for r in self._results if r.status not in (PageStatus.PENDING, PageStatus.MAX_DEPTH, PageStatus.SKIPPED)])
+        stats.total_crawled = len(
+            [r for r in self._results if r.status not in (PageStatus.PENDING, PageStatus.MAX_DEPTH, PageStatus.SKIPPED)]
+        )
         stats.total_discovered = len(self._results)
         for r in self._results:
             if r.http_status_code:
@@ -449,10 +461,17 @@ class SitemapGeneratorApp(App):
                     stats.total_4xx += 1
                 elif cat == 5:
                     stats.total_5xx += 1
-        stats.total_errors = stats.total_4xx + stats.total_5xx + len([
-            r for r in self._results
-            if r.status in (PageStatus.ERROR, PageStatus.TIMEOUT) and r.http_status_code < 400
-        ])
+        stats.total_errors = (
+            stats.total_4xx
+            + stats.total_5xx
+            + len(
+                [
+                    r
+                    for r in self._results
+                    if r.status in (PageStatus.ERROR, PageStatus.TIMEOUT) and r.http_status_code < 400
+                ]
+            )
+        )
 
         Reporter.save_error_report(self._results, stats, self.start_url, filename)
         self._write_log(t("log.error_report_written", filename=filename, count=len(errors)))
@@ -550,6 +569,7 @@ class SitemapGeneratorApp(App):
 
         # Rich-Markup entfernen fuer Clipboard
         import re
+
         clean_lines = []
         for line in self._log_lines:
             clean = re.sub(r"\[/?[^\]]*\]", "", line)
@@ -562,6 +582,7 @@ class SitemapGeneratorApp(App):
     def action_show_history(self) -> None:
         """Zeigt den History-Dialog an."""
         from .screens.history import HistoryScreen
+
         self.push_screen(HistoryScreen(), self._on_history_selected)
 
     def _on_history_selected(self, entry: HistoryEntry | None) -> None:
@@ -593,8 +614,13 @@ class SitemapGeneratorApp(App):
         self._update_playwright_binding_label()
 
         self._write_log(
-            t("log.history_loaded", url=self.start_url, mode=mode,
-              max_depth=self.max_depth, concurrency=self.concurrency)
+            t(
+                "log.history_loaded",
+                url=self.start_url,
+                mode=mode,
+                max_depth=self.max_depth,
+                concurrency=self.concurrency,
+            )
         )
 
     def on_url_table_url_highlighted(self, event: UrlTable.UrlHighlighted) -> None:
@@ -622,6 +648,7 @@ class SitemapGeneratorApp(App):
     def action_show_about(self) -> None:
         """Zeigt den About-Dialog an."""
         from .screens.about import AboutScreen
+
         self.push_screen(AboutScreen())
 
     def action_jira_report(self) -> None:
@@ -669,9 +696,14 @@ class SitemapGeneratorApp(App):
             return
 
         from .screens.tree import TreeScreen
-        self.push_screen(TreeScreen(
-            self._results, self.start_url, self._official_sitemap_urls,
-        ))
+
+        self.push_screen(
+            TreeScreen(
+                self._results,
+                self.start_url,
+                self._official_sitemap_urls,
+            )
+        )
 
     def action_sitemap_diff(self) -> None:
         """Kopiert den Sitemap-Diff (fehlende/ueberfluessige URLs) in die Zwischenablage."""
@@ -684,10 +716,7 @@ class SitemapGeneratorApp(App):
             return
 
         # Nur HTTP-200 Seiten vergleichen
-        crawled_urls = {
-            r.url for r in self._results
-            if r.http_status_code == 200
-        }
+        crawled_urls = {r.url for r in self._results if r.http_status_code == 200}
 
         not_in_sitemap = sorted(crawled_urls - self._official_sitemap_urls)
         not_crawled = sorted(self._official_sitemap_urls - crawled_urls)
@@ -709,14 +738,8 @@ class SitemapGeneratorApp(App):
 
         text = "\n".join(lines)
         self.copy_to_clipboard(text)
-        self._write_log(
-            t("log.sitemap_diff_copied",
-              missing=len(not_in_sitemap), not_crawled=len(not_crawled))
-        )
-        self.notify(
-            t("notify.sitemap_diff",
-              missing=len(not_in_sitemap), not_crawled=len(not_crawled))
-        )
+        self._write_log(t("log.sitemap_diff_copied", missing=len(not_in_sitemap), not_crawled=len(not_crawled)))
+        self.notify(t("notify.sitemap_diff", missing=len(not_in_sitemap), not_crawled=len(not_crawled)))
 
     def action_copy_detail(self) -> None:
         """Kopiert die URL-Details der markierten URL in die Zwischenablage."""
@@ -736,12 +759,14 @@ class SitemapGeneratorApp(App):
         ]
         if result.redirect_url:
             lines.append(t("copy.redirect", url=_sanitize_url(result.redirect_url)))
-        lines.extend([
-            t("copy.http", code=result.http_status_code if result.http_status_code else '-'),
-            t("copy.depth", depth=result.depth),
-            t("copy.links", count=result.links_found),
-            t("copy.load_time", time=f'{result.load_time_ms:.0f}ms' if result.load_time_ms else '-'),
-        ])
+        lines.extend(
+            [
+                t("copy.http", code=result.http_status_code if result.http_status_code else "-"),
+                t("copy.depth", depth=result.depth),
+                t("copy.links", count=result.links_found),
+                t("copy.load_time", time=f"{result.load_time_ms:.0f}ms" if result.load_time_ms else "-"),
+            ]
+        )
 
         if result.content_type:
             lines.append(f"Content-Type: {result.content_type}")

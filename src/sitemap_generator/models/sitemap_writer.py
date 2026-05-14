@@ -6,8 +6,7 @@ import os
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
-from .crawl_result import CrawlResult, PageStatus
-
+from .crawl_result import CrawlResult
 
 # Max URLs pro Sitemap-Datei laut Standard
 MAX_URLS_PER_SITEMAP = 50_000
@@ -36,10 +35,7 @@ class SitemapWriter:
             Liste der geschriebenen Dateien.
         """
         # Nur HTTP 200 Seiten mit text/html in die Sitemap
-        urls = [
-            r for r in self._results
-            if r.http_status_code == 200 and self._is_html(r)
-        ]
+        urls = [r for r in self._results if r.http_status_code == 200 and self._is_html(r)]
 
         if not urls:
             return []
@@ -90,7 +86,7 @@ class SitemapWriter:
         written_files: list[str] = []
 
         # Teil-Sitemaps schreiben
-        chunks = [urls[i:i + MAX_URLS_PER_SITEMAP] for i in range(0, len(urls), MAX_URLS_PER_SITEMAP)]
+        chunks = [urls[i : i + MAX_URLS_PER_SITEMAP] for i in range(0, len(urls), MAX_URLS_PER_SITEMAP)]
         for idx, chunk in enumerate(chunks, 1):
             part_path = f"{base}-{idx}{ext}"
             self._write_single(chunk, part_path)

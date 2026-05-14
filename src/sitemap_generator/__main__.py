@@ -58,27 +58,31 @@ def main() -> None:
         help=t("cli.url_help"),
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default="",
         metavar="PATH",
         help=t("cli.output_help"),
     )
     parser.add_argument(
-        "--max-depth", "-d",
+        "--max-depth",
+        "-d",
         type=int,
         default=10,
         metavar="N",
         help=t("cli.max_depth_help"),
     )
     parser.add_argument(
-        "--concurrency", "-c",
+        "--concurrency",
+        "-c",
         type=int,
         default=8,
         metavar="N",
         help=t("cli.concurrency_help"),
     )
     parser.add_argument(
-        "--timeout", "-t",
+        "--timeout",
+        "-t",
         type=int,
         default=30,
         metavar="SEC",

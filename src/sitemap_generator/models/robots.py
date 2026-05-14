@@ -29,7 +29,7 @@ class RobotsChecker:
         robots_url = urlunparse((parsed.scheme, parsed.netloc, "/robots.txt", "", "", ""))
 
         jar = httpx.Cookies()
-        for c in (cookies or []):
+        for c in cookies or []:
             jar.set(c["name"], c["value"])
 
         try:
@@ -63,7 +63,7 @@ class RobotsChecker:
 
             # Kommentare entfernen
             if "#" in line:
-                line = line[:line.index("#")].strip()
+                line = line[: line.index("#")].strip()
             if not line:
                 continue
 
@@ -71,7 +71,7 @@ class RobotsChecker:
 
             # User-agent Zeilen
             if lower.startswith("user-agent:"):
-                agent = line[len("user-agent:"):].strip()
+                agent = line[len("user-agent:") :].strip()
                 if agent == "*":
                     in_wildcard_block = True
                     in_specific_block = False
@@ -84,22 +84,22 @@ class RobotsChecker:
             if not in_wildcard_block or in_specific_block:
                 # Sitemap-Eintraege sind global
                 if lower.startswith("sitemap:"):
-                    url = line[len("sitemap:"):].strip()
+                    url = line[len("sitemap:") :].strip()
                     if url:
                         self._sitemaps.append(url)
                 continue
 
             # Disallow/Allow Regeln
             if lower.startswith("disallow:"):
-                path = line[len("disallow:"):].strip()
+                path = line[len("disallow:") :].strip()
                 if path:
                     self._rules.append((path, False))
             elif lower.startswith("allow:"):
-                path = line[len("allow:"):].strip()
+                path = line[len("allow:") :].strip()
                 if path:
                     self._rules.append((path, True))
             elif lower.startswith("sitemap:"):
-                url = line[len("sitemap:"):].strip()
+                url = line[len("sitemap:") :].strip()
                 if url:
                     self._sitemaps.append(url)
 

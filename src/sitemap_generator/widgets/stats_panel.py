@@ -8,12 +8,11 @@ from rich.console import Group
 from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
-
 from textual.app import ComposeResult
 from textual.widgets import Static
 
 from ..i18n import t
-from ..models.crawl_result import CrawlResult, CrawlStats, PageStatus
+from ..models.crawl_result import CrawlResult, CrawlStats
 
 
 def _sanitize_url(url: str) -> str:
@@ -35,14 +34,16 @@ def _sanitize_url(url: str) -> str:
     # nicht doppelt kodiert werden (%25C3%25A4).
     safe_path = quote(parsed.path, safe="/:@!$&'*+,;=-._~%")
     safe_query = quote(parsed.query, safe="/:@!$&'*+,;=-._~?=%")
-    return urlunparse((
-        parsed.scheme,
-        parsed.netloc,
-        safe_path,
-        parsed.params,
-        safe_query,
-        parsed.fragment,
-    ))
+    return urlunparse(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            safe_path,
+            parsed.params,
+            safe_query,
+            parsed.fragment,
+        )
+    )
 
 
 class StatsPanel(Static):
@@ -138,26 +139,43 @@ class StatsPanel(Static):
         # link_url erzeugt OSC 8 Hyperlink → CTRL+Click oeffnet volle URL
         # auch wenn der angezeigte Text auf mehrere Zeilen umbricht.
         safe_url = _sanitize_url(result.url)
-        renderables.append(self._detail_line(
-            t("detail.url"), safe_url, "bold", link_url=safe_url,
-        ))
-        renderables.append(self._detail_line(
-            t("detail.status"), f"{result.status_icon} {result.status.value}",
-        ))
+        renderables.append(
+            self._detail_line(
+                t("detail.url"),
+                safe_url,
+                "bold",
+                link_url=safe_url,
+            )
+        )
+        renderables.append(
+            self._detail_line(
+                t("detail.status"),
+                f"{result.status_icon} {result.status.value}",
+            )
+        )
         if result.redirect_url:
             safe_redirect = _sanitize_url(result.redirect_url)
-            renderables.append(self._detail_line(
-                t("detail.redirect"), safe_redirect, link_url=safe_redirect,
-            ))
-        renderables.append(self._detail_line(
-            t("detail.http"), str(result.http_status_code) if result.http_status_code else "-",
-        ))
+            renderables.append(
+                self._detail_line(
+                    t("detail.redirect"),
+                    safe_redirect,
+                    link_url=safe_redirect,
+                )
+            )
+        renderables.append(
+            self._detail_line(
+                t("detail.http"),
+                str(result.http_status_code) if result.http_status_code else "-",
+            )
+        )
         renderables.append(self._detail_line(t("detail.depth"), str(result.depth)))
         renderables.append(self._detail_line(t("detail.links"), str(result.links_found)))
-        renderables.append(self._detail_line(
-            t("detail.load_time"),
-            f"{result.load_time_ms:.0f}ms" if result.load_time_ms else "-",
-        ))
+        renderables.append(
+            self._detail_line(
+                t("detail.load_time"),
+                f"{result.load_time_ms:.0f}ms" if result.load_time_ms else "-",
+            )
+        )
         form_value = t("detail.form_yes") if result.has_form else t("detail.form_no")
         form_style = "green" if result.has_form else "dim"
         renderables.append(self._detail_line(t("detail.form"), form_value, form_style))
@@ -168,9 +186,13 @@ class StatsPanel(Static):
             renderables.append(self._detail_line(t("detail.last_modified"), result.last_modified))
         if result.parent_url:
             safe_parent = _sanitize_url(result.parent_url)
-            renderables.append(self._detail_line(
-                t("detail.parent"), safe_parent, link_url=safe_parent,
-            ))
+            renderables.append(
+                self._detail_line(
+                    t("detail.parent"),
+                    safe_parent,
+                    link_url=safe_parent,
+                )
+            )
         if result.error_message:
             renderables.append(self._detail_line(t("detail.error"), result.error_message, "red"))
 

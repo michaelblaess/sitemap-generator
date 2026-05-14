@@ -1,9 +1,10 @@
 """Datenmodelle fuer den Crawl-Vorgang."""
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 
 
 def friendly_error_message(error: Exception) -> str:
@@ -39,6 +40,7 @@ def friendly_error_message(error: Exception) -> str:
 
 class PageStatus(Enum):
     """Status einer gecrawlten Seite."""
+
     PENDING = "pending"
     CRAWLING = "crawling"
     OK = "ok"
@@ -46,13 +48,14 @@ class PageStatus(Enum):
     REDIRECT_EXTERNAL = "redirect_external"  # Redirect auf andere Domain
     ERROR = "error"
     TIMEOUT = "timeout"
-    SKIPPED = "skipped"      # robots.txt disallowed or filtered
+    SKIPPED = "skipped"  # robots.txt disallowed or filtered
     MAX_DEPTH = "max_depth"  # max depth reached
 
 
 @dataclass
 class CrawlResult:
     """Ergebnis fuer eine einzelne gecrawlte URL."""
+
     url: str
     status: PageStatus = PageStatus.PENDING
     http_status_code: int = 0
@@ -60,11 +63,11 @@ class CrawlResult:
     depth: int = 0
     parent_url: str = ""
     load_time_ms: float = 0
-    last_modified: str = ""        # from HTTP Last-Modified header
-    links_found: int = 0           # number of internal links found on page
-    has_form: bool = False          # page contains <form> element(s)
+    last_modified: str = ""  # from HTTP Last-Modified header
+    links_found: int = 0  # number of internal links found on page
+    has_form: bool = False  # page contains <form> element(s)
     error_message: str = ""
-    redirect_url: str = ""             # final URL after redirect(s)
+    redirect_url: str = ""  # final URL after redirect(s)
     referring_pages: list[dict] = field(default_factory=list)
     # ^ [{"url": "https://...", "link_text": "Mehr erfahren"}]
 
@@ -76,10 +79,7 @@ class CrawlResult:
         """
         if self.status in (PageStatus.REDIRECT, PageStatus.REDIRECT_EXTERNAL):
             return False
-        return (
-            self.http_status_code >= 400
-            or self.status in (PageStatus.ERROR, PageStatus.TIMEOUT)
-        )
+        return self.http_status_code >= 400 or self.status in (PageStatus.ERROR, PageStatus.TIMEOUT)
 
     @property
     def is_external_redirect(self) -> bool:
@@ -125,13 +125,16 @@ class CrawlResult:
     @property
     def is_successful(self) -> bool:
         return self.status in (
-            PageStatus.OK, PageStatus.REDIRECT, PageStatus.REDIRECT_EXTERNAL,
+            PageStatus.OK,
+            PageStatus.REDIRECT,
+            PageStatus.REDIRECT_EXTERNAL,
         )
 
 
 @dataclass
 class CrawlStats:
     """Statistiken des gesamten Crawl-Vorgangs."""
+
     total_discovered: int = 0
     total_crawled: int = 0
     total_errors: int = 0

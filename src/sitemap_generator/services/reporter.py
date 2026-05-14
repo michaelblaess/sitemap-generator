@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from urllib.parse import urlparse
 
 from ..i18n import t
 from ..models.crawl_result import CrawlResult, CrawlStats, PageStatus
@@ -36,11 +35,7 @@ class Reporter:
         Returns:
             Pfad der geschriebenen Datei.
         """
-        errors = [
-            r for r in results
-            if r.http_status_code >= 400
-            or r.status in (PageStatus.ERROR, PageStatus.TIMEOUT)
-        ]
+        errors = [r for r in results if r.http_status_code >= 400 or r.status in (PageStatus.ERROR, PageStatus.TIMEOUT)]
 
         report = {
             "generated_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
@@ -90,10 +85,7 @@ class Reporter:
         Returns:
             Pfad der geschriebenen Datei.
         """
-        form_urls = [
-            r.url for r in results
-            if r.has_form and r.http_status_code == 200
-        ]
+        form_urls = [r.url for r in results if r.has_form and r.http_status_code == 200]
 
         report = {
             "urls": sorted(form_urls),
@@ -118,11 +110,7 @@ class Reporter:
         Returns:
             JIRA-Wiki-Markup-String fuer die Zwischenablage.
         """
-        errors = [
-            r for r in results
-            if r.http_status_code >= 400
-            or r.status in (PageStatus.ERROR, PageStatus.TIMEOUT)
-        ]
+        errors = [r for r in results if r.http_status_code >= 400 or r.status in (PageStatus.ERROR, PageStatus.TIMEOUT)]
 
         if not errors:
             return ""
