@@ -8,7 +8,7 @@ echo "[1/4] Erstelle Virtual Environment..."
 python3 -m venv .venv
 
 echo "[2/4] Installiere Abhaengigkeiten..."
-.venv/bin/pip install -e .
+.venv/bin/pip install --upgrade -e .
 
 echo "[3/4] Installiere Playwright Chromium..."
 .venv/bin/playwright install chromium
