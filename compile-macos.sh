@@ -53,13 +53,16 @@ echo "Compiling sitemap-generator v$version ($arch) with Nuitka..."
 rm -rf "$dist_dir"
 started=$(date +%s)
 
+# Den Playwright-Node-Treiber NICHT explizit einschliessen - das macht Nuitkas
+# eingebautes playwright-Plugin. Ein zusaetzliches --include-package-data=
+# playwright kollidiert mit dem Plugin ("data file
+# 'playwright/driver/node' conflicts with exe").
 "$python" -m nuitka \
     --standalone \
     --assume-yes-for-downloads \
     --remove-output \
     --include-package=sitemap_generator \
     --include-package-data=sitemap_generator \
-    --include-package-data=playwright \
     --output-dir="$out_dir" \
     --output-filename=sitemap-generator \
     "$entry"

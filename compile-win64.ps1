@@ -48,14 +48,16 @@ if (Test-Path $distDir) { Remove-Item -Recurse -Force $distDir }
 $started = Get-Date
 
 # --include-package-data=sitemap_generator : app.tcss + locale\*.json
-# --include-package-data=playwright        : der Node-Treiber von Playwright
+# Den Playwright-Node-Treiber NICHT explizit einschliessen - das macht Nuitkas
+# eingebautes playwright-Plugin. Ein zusaetzliches --include-package-data=
+# playwright kollidiert unter Linux mit dem Plugin ("data file
+# 'playwright/driver/node' conflicts with exe").
 & $python -m nuitka `
     --standalone `
     --assume-yes-for-downloads `
     --remove-output `
     --include-package=sitemap_generator `
     --include-package-data=sitemap_generator `
-    --include-package-data=playwright `
     --output-dir=$outDir `
     --output-filename=sitemap-generator.exe `
     --company-name="Michael Blaess" `
