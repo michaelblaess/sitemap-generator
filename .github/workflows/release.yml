@@ -14,91 +14,56 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            artifact: sitemap-generator-windows
-            ext: .zip
+            shell: pwsh
+            bootstrap: ./bootstrap.ps1
+            compile: ./compile-win64.ps1
           - os: ubuntu-22.04
-            artifact: sitemap-generator-linux
-            ext: .tar.gz
+            shell: bash
+            bootstrap: ./bootstrap.sh
+            compile: ./compile-linux.sh
           - os: macos-latest
-            artifact: sitemap-generator-macos
-            ext: .tar.gz
+            shell: bash
+            bootstrap: ./bootstrap.sh
+            compile: ./compile-macos.sh
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+      # Nuitka braucht patchelf fuer den --standalone-Build unter Linux
+      - name: Install patchelf (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y patchelf
 
-      - name: Install dependencies
-        run: |
-          pip install -e .
-          pip install pyinstaller
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-      - name: Install Playwright Chromium
-        run: playwright install chromium
+      # bootstrap: venv + Deps + Nuitka + Playwright-Chromium
+      - name: Bootstrap dev environment
+        run: ${{ matrix.bootstrap }}
+        shell: ${{ matrix.shell }}
 
-      - name: Build with PyInstaller
-        run: |
-          pyinstaller \
-            --name sitemap-generator \
-            --onedir \
-            --console \
-            --add-data "src/sitemap_generator/app.tcss:sitemap_generator" \
-            --hidden-import sitemap_generator \
-            --hidden-import sitemap_generator.app \
-            --hidden-import sitemap_generator.models \
-            --hidden-import sitemap_generator.models.crawl_result \
-            --hidden-import sitemap_generator.models.robots \
-            --hidden-import sitemap_generator.models.sitemap_writer \
-            --hidden-import sitemap_generator.models.settings \
-            --hidden-import sitemap_generator.services \
-            --hidden-import sitemap_generator.services.crawler \
-            --hidden-import sitemap_generator.widgets \
-            --hidden-import sitemap_generator.widgets.url_table \
-            --hidden-import sitemap_generator.widgets.stats_panel \
-            --hidden-import sitemap_generator.widgets.summary_panel \
-            --hidden-import sitemap_generator.screens \
-            --hidden-import sitemap_generator.screens.about \
-            --collect-submodules rich._unicode_data \
-            src/sitemap_generator/__main__.py
-        shell: bash
-
-      - name: Bundle Chromium browsers
-        run: |
-          cp -r "$HOME/.cache/ms-playwright" dist/sitemap-generator/browsers 2>/dev/null || \
-          cp -r "$USERPROFILE/AppData/Local/ms-playwright" dist/sitemap-generator/browsers 2>/dev/null || \
-          cp -r "$HOME/Library/Caches/ms-playwright" dist/sitemap-generator/browsers 2>/dev/null || \
-          echo "Warning: Could not find Playwright browsers"
-        shell: bash
-
-      - name: Package (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          cd dist
-          Compress-Archive -Path sitemap-generator -DestinationPath ${{ matrix.artifact }}.zip
-        shell: pwsh
-
-      - name: Package (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cd dist
-          tar -czf ${{ matrix.artifact }}.tar.gz sitemap-generator
+      # compile: Nuitka-Standalone-Build inkl. gebuendeltem Chromium
+      - name: Compile standalone binary (Nuitka)
+        run: ${{ matrix.compile }}
+        shell: ${{ matrix.shell }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: dist/${{ matrix.artifact }}${{ matrix.ext }}
+          name: dist-${{ matrix.os }}
+          path: |
+            dist/sitemap-generator-v*.zip
+            dist/sitemap-generator-v*.tar.gz
 
   release:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
           merge-multiple: true
 
@@ -107,6 +72,5 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            sitemap-generator-windows.zip
-            sitemap-generator-linux.tar.gz
-            sitemap-generator-macos.tar.gz
+            *.zip
+            *.tar.gz
