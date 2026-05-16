@@ -15,6 +15,8 @@ if getattr(sys, "frozen", False):
     if os.path.isdir(_browsers_dir):
         os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _browsers_dir
 
+from textual_widgets import reset_terminal_title, set_terminal_title
+
 from sitemap_generator import __version__
 from sitemap_generator.i18n import load_locale, t
 from sitemap_generator.models.settings import Settings
@@ -146,20 +148,25 @@ def main() -> None:
 
     from sitemap_generator.app import SitemapGeneratorApp
 
-    app = SitemapGeneratorApp(
-        start_url=start_url,
-        sitemap_file=sitemap_file,
-        output_path=args.output,
-        max_depth=args.max_depth,
-        concurrency=args.concurrency,
-        timeout=args.timeout,
-        render=args.render,
-        headless=not args.no_headless,
-        respect_robots=not args.ignore_robots,
-        user_agent=args.user_agent,
-        cookies=cookies,
-    )
-    app.run()
+    # Terminal-Tab-Titel setzen - Textual macht das nicht selbst.
+    set_terminal_title(f"sitemap-generator v{__version__}")
+    try:
+        app = SitemapGeneratorApp(
+            start_url=start_url,
+            sitemap_file=sitemap_file,
+            output_path=args.output,
+            max_depth=args.max_depth,
+            concurrency=args.concurrency,
+            timeout=args.timeout,
+            render=args.render,
+            headless=not args.no_headless,
+            respect_robots=not args.ignore_robots,
+            user_agent=args.user_agent,
+            cookies=cookies,
+        )
+        app.run()
+    finally:
+        reset_terminal_title()
 
 
 if __name__ == "__main__":
