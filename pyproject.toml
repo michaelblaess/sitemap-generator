@@ -7,7 +7,7 @@ name = "sitemap-generator"
 version = "1.6.0"
 description = "Sitemap Generator with TUI - crawls websites and generates sitemap.xml"
 license = "Apache-2.0"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "textual>=0.85.0",
     "playwright>=1.40.0",
@@ -51,7 +51,7 @@ fix = { cmd = "ruff check --fix .", help = "Ruff Auto-Fix" }
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "ASYNC"]
