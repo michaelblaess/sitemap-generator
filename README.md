@@ -115,6 +115,8 @@ sitemap-generator https://example.com --cookie session=abc123
 - **URL normalization**: Duplicates avoided through normalization
 - **Form detection**: `<form>` tags are detected, marked in the table and exportable as JSON
 - **Live TUI**: Progress, statistics and URL details in real time
+- **Resizable panels**: Splitters to freely resize the URL table, log and stats panels
+- **Log panel**: Right-click context menu — copy, export to file, or hide
 
 ## Browser Strategy
 
@@ -158,8 +160,8 @@ run.bat https://example.com
 ### Creating a Release
 
 ```bash
-git tag v1.4.0
-git push origin v1.4.0
+git tag v1.8.0
+git push origin v1.8.0
 ```
 
 GitHub Actions automatically builds executables for Windows, Linux and macOS.
