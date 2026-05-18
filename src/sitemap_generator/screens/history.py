@@ -1,4 +1,4 @@
-"""History-Screen fuer Playwright Sitemap Generator.
+"""History-Screen fuer den Sitemap Generator.
 
 Zeigt eine Liste vergangener Crawls und ermoeglicht die Wiederholung
 eines ausgewaehlten Crawls.
@@ -10,9 +10,9 @@ from urllib.parse import urlparse
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
+from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import DataTable, Static
+from textual.widgets import Button, DataTable, Static
 
 from ..i18n import t
 from ..models.history import History, HistoryEntry
@@ -43,7 +43,7 @@ class HistoryScreen(ModalScreen[HistoryEntry | None]):
         content-align: center middle;
         text-style: bold;
         background: $accent;
-        color: $text;
+        color: auto;
         margin-bottom: 1;
     }
 
@@ -59,11 +59,14 @@ class HistoryScreen(ModalScreen[HistoryEntry | None]):
         height: 1fr;
     }
 
-    HistoryScreen #history-footer {
-        height: 1;
-        content-align: center middle;
-        color: $text-muted;
+    HistoryScreen #history-buttons {
+        height: 3;
+        align: center middle;
         margin-top: 1;
+    }
+
+    HistoryScreen #history-buttons Button {
+        margin: 0 1;
     }
     """
 
@@ -89,7 +92,7 @@ class HistoryScreen(ModalScreen[HistoryEntry | None]):
                     id="history-empty",
                 )
             else:
-                table = DataTable(id="history-table", cursor_type="row")
+                table: DataTable[str] = DataTable(id="history-table", cursor_type="row")
                 table.add_columns(
                     t("history.col_number"),
                     t("history.col_date"),
@@ -129,7 +132,10 @@ class HistoryScreen(ModalScreen[HistoryEntry | None]):
 
                 yield table
 
-            yield Static(t("history.footer"), id="history-footer")
+            with Horizontal(id="history-buttons"):
+                if self._entries:
+                    yield Button(t("history.btn_select"), variant="primary", id="history-select")
+                yield Button(t("history.btn_close"), variant="default", id="history-close")
 
     def on_mount(self) -> None:
         """Fokussiert die Tabelle nach dem Oeffnen."""
@@ -141,7 +147,7 @@ class HistoryScreen(ModalScreen[HistoryEntry | None]):
                 pass
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        """Verarbeitet die Auswahl einer Zeile.
+        """Verarbeitet die Auswahl einer Zeile per Enter oder Klick.
 
         Args:
             event: Das RowSelected-Event mit dem Key der Zeile.
@@ -151,6 +157,27 @@ class HistoryScreen(ModalScreen[HistoryEntry | None]):
             if 0 <= idx < len(self._entries):
                 self.dismiss(self._entries[idx])
         except (ValueError, IndexError):
+            pass
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Verarbeitet Klicks auf die Auswahl-/Schliessen-Buttons.
+
+        Args:
+            event: Das Pressed-Event mit dem geklickten Button.
+        """
+        if event.button.id == "history-select":
+            self._select_highlighted()
+        else:
+            self.dismiss(None)
+
+    def _select_highlighted(self) -> None:
+        """Waehlt die aktuell in der Tabelle markierte Zeile aus."""
+        try:
+            table = self.query_one("#history-table", DataTable)
+            idx = table.cursor_row
+            if 0 <= idx < len(self._entries):
+                self.dismiss(self._entries[idx])
+        except Exception:
             pass
 
     def action_close(self) -> None:

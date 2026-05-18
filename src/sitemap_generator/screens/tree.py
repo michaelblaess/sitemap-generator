@@ -12,9 +12,9 @@ from urllib.parse import urlparse
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
+from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Static, Tree
+from textual.widgets import Button, Static, Tree
 
 from ..i18n import t
 from ..models.crawl_result import CrawlResult, PageStatus
@@ -45,7 +45,7 @@ class TreeScreen(ModalScreen):
         content-align: center middle;
         text-style: bold;
         background: $accent;
-        color: $text;
+        color: auto;
         margin-bottom: 1;
     }
 
@@ -53,11 +53,14 @@ class TreeScreen(ModalScreen):
         height: 1fr;
     }
 
-    TreeScreen #tree-footer {
-        height: 1;
-        content-align: center middle;
-        color: $text-muted;
+    TreeScreen #tree-buttons {
+        height: 3;
+        align: center middle;
         margin-top: 1;
+    }
+
+    TreeScreen #tree-buttons Button {
+        margin: 0 1;
     }
     """
 
@@ -92,7 +95,12 @@ class TreeScreen(ModalScreen):
         with Vertical():
             yield Static(t("tree.title"), id="tree-title")
             yield Tree(t("tree.root_label"), id="site-tree")
-            yield Static(t("tree.footer"), id="tree-footer")
+            with Horizontal(id="tree-buttons"):
+                yield Button(t("tree.btn_mermaid"), variant="primary", id="tree-mermaid")
+                yield Button(t("tree.btn_ascii"), variant="primary", id="tree-ascii")
+                yield Button(t("tree.btn_expand"), variant="default", id="tree-expand")
+                yield Button(t("tree.btn_collapse"), variant="default", id="tree-collapse")
+                yield Button(t("tree.btn_close"), variant="default", id="tree-close")
 
     def on_mount(self) -> None:
         """Baut den Textual-Tree nach dem Mounten auf."""
@@ -345,6 +353,23 @@ class TreeScreen(ModalScreen):
         # Root wieder aufklappen damit man etwas sieht
         tree_widget.root.expand()
         self.app.notify(t("notify.tree_collapsed"))
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Leitet Button-Klicks an die jeweilige Aktion weiter.
+
+        Args:
+            event: Das Pressed-Event mit dem geklickten Button.
+        """
+        actions = {
+            "tree-mermaid": self.action_copy_mermaid,
+            "tree-ascii": self.action_copy_ascii,
+            "tree-expand": self.action_expand_all,
+            "tree-collapse": self.action_collapse_all,
+            "tree-close": self.action_close,
+        }
+        handler = actions.get(event.button.id or "")
+        if handler is not None:
+            handler()
 
     def action_close(self) -> None:
         """Schliesst den Dialog."""
