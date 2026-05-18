@@ -161,8 +161,8 @@ run.bat https://example.com
 ### Creating a Release
 
 ```bash
-git tag v1.9.0
-git push origin v1.9.0
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
 GitHub Actions automatically builds executables for Windows, Linux and macOS.
