@@ -87,23 +87,22 @@ sitemap-generator https://example.com --cookie session=abc123
 
 | Key | Function |
 |---|---|
-| `s` | Start crawl |
+| `c` | Start crawl |
 | `x` | Cancel crawl / JSON error report |
 | `m` | Save sitemap |
+| `s` | Settings |
 | `g` | Export form report (JSON) |
 | `j` | JIRA table to clipboard |
 | `e` | Show errors only |
 | `b` | Sitemap tree |
 | `f` | Sitemap diff |
 | `d` | Copy URL details |
-| `c` | Copy log |
 | `l` | Toggle log |
-| `+` / `-` | Enlarge/shrink log |
 | `h` | History |
-| `o` | robots.txt ON/OFF |
-| `p` | Playwright ON/OFF |
 | `i` | Info dialog |
 | `q` | Quit |
+
+Copying / exporting the log runs via right-click on the log panel.
 
 ## Features
 
@@ -117,6 +116,8 @@ sitemap-generator https://example.com --cookie session=abc123
 - **Live TUI**: Progress, statistics and URL details in real time
 - **Resizable panels**: Splitters to freely resize the URL table, log and stats panels
 - **Log panel**: Right-click context menu — copy, export to file, or hide
+- **Settings dialog**: Language, robots.txt, Playwright, concurrency, timeout and crawl depth — persisted across runs
+- **Filter with history**: Filter the URL table by URL/status; recent filter terms in a dropdown
 
 ## Browser Strategy
 
@@ -160,8 +161,8 @@ run.bat https://example.com
 ### Creating a Release
 
 ```bash
-git tag v1.8.0
-git push origin v1.8.0
+git tag v1.9.0
+git push origin v1.9.0
 ```
 
 GitHub Actions automatically builds executables for Windows, Linux and macOS.

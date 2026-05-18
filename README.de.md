@@ -87,23 +87,22 @@ sitemap-generator https://example.com --cookie session=abc123
 
 | Taste | Funktion |
 |---|---|
-| `s` | Crawl starten |
+| `c` | Crawl starten |
 | `x` | Crawl abbrechen / JSON-Fehlerbericht |
 | `m` | Sitemap speichern |
+| `s` | Einstellungen |
 | `g` | Formular-Report exportieren (JSON) |
 | `j` | JIRA-Tabelle in Zwischenablage |
 | `e` | Nur Fehler anzeigen |
 | `b` | Seitenbaum |
 | `f` | Sitemap-Diff |
 | `d` | URL-Details kopieren |
-| `c` | Log kopieren |
 | `l` | Log ein/aus |
-| `+` / `-` | Log vergrößern/verkleinern |
 | `h` | History |
-| `o` | robots.txt AN/AUS |
-| `p` | Playwright AN/AUS |
 | `i` | Info-Dialog |
 | `q` | Beenden |
+
+Log kopieren / exportieren läuft über Rechtsklick auf das Log-Panel.
 
 ## Features
 
@@ -117,6 +116,8 @@ sitemap-generator https://example.com --cookie session=abc123
 - **Live-TUI**: Fortschritt, Statistiken und URL-Details in Echtzeit
 - **Anpassbare Panels**: Splitter zum freien Anpassen von URL-Tabelle, Log und Statistik-Panel
 - **Log-Panel**: Rechtsklick-Kontextmenü — kopieren, in Datei exportieren oder ausblenden
+- **Einstellungen-Dialog**: Sprache, robots.txt, Playwright, Concurrency, Timeout und Crawl-Tiefe — dauerhaft gespeichert
+- **Filter mit Verlauf**: URL-Tabelle nach URL/Status filtern; letzte Filterbegriffe im Dropdown
 
 ## Browser-Strategie
 
@@ -160,8 +161,8 @@ run.bat https://example.com
 ### Release erstellen
 
 ```bash
-git tag v1.8.0
-git push origin v1.8.0
+git tag v1.9.0
+git push origin v1.9.0
 ```
 
 GitHub Actions baut automatisch Executables für Windows, Linux und macOS.
