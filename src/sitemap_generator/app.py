@@ -24,8 +24,10 @@ from .models.settings import Settings
 from .models.sitemap_reader import discover_sitemap, load_sitemap_from_file, load_sitemap_urls
 from .models.sitemap_writer import SitemapWriter
 from .services.crawler import Crawler
+from .services.preview_service import PreviewService
 from .services.reporter import Reporter
 from .widgets.crawl_header import CrawlHeader
+from .widgets.preview_panel import PreviewPanel
 from .widgets.stats_panel import StatsPanel
 from .widgets.url_table import UrlTable
 
@@ -110,6 +112,8 @@ class SitemapGeneratorApp(LogRouter, App):
         self._official_sitemap_urls: set[str] = set()
         self._log_height: int = LOG_HEIGHT_DEFAULT
         self._stats_timer = None
+        self.show_preview: bool = self._settings.show_preview
+        self._preview_service: PreviewService | None = None
 
         # Uebersetzte Binding-Labels setzen
         self._init_bindings()
@@ -171,12 +175,18 @@ class SitemapGeneratorApp(LogRouter, App):
                 )
 
             yield VerticalSplitter(target_id="left-panel", min_size=40, id="main-splitter")
-            yield StatsPanel(id="stats-panel")
+            with Vertical(id="right-panel"):
+                yield PreviewPanel(id="preview-panel")
+                yield StatsPanel(id="stats-panel")
 
         yield Footer()
 
     def on_mount(self) -> None:
         """Initialisierung nach dem Starten."""
+        # Vorschau-Panel nur einblenden, wenn die Vorschau aktiviert ist.
+        if not self.show_preview:
+            self.query_one("#preview-panel", PreviewPanel).display = False
+
         mode = t("mode.playwright") if self.render else t("mode.httpx")
         robots_info = t("log.robots_on") if self.respect_robots else t("log.robots_off")
         self._write_log(t("log.version", version=__version__))
@@ -557,16 +567,27 @@ class SitemapGeneratorApp(LogRouter, App):
         self.timeout = int(result.get("timeout", self.timeout))  # type: ignore[arg-type]
         self.max_depth = int(result.get("max_depth", self.max_depth))  # type: ignore[arg-type]
 
+        new_preview = bool(result.get("show_preview", self.show_preview))
+        preview_changed = new_preview != self.show_preview
+
         self._settings.respect_robots = self.respect_robots
         self._settings.render = self.render
         self._settings.concurrency = self.concurrency
         self._settings.timeout = self.timeout
         self._settings.max_depth = self.max_depth
+        self._settings.show_preview = new_preview
         self._settings.language = str(result.get("language", self._settings.language))
         self._settings.save()
 
+        # CrawlHeader-Konfiguration an die geaenderten Werte anpassen
+        with contextlib.suppress(Exception):
+            header = self.query_one("#summary", CrawlHeader)
+            header.update_config(self.render, self.respect_robots, self.concurrency, self.timeout, self.max_depth)
+
         self._write_log(t("log.robots_respected") if self.respect_robots else t("log.robots_ignored"))
         self._write_log(t("log.playwright_on") if self.render else t("log.playwright_off"))
+        if preview_changed:
+            self.notify(t("notify.preview_restart"), severity="information")
 
     def action_toggle_errors(self) -> None:
         """Schaltet den Error-Filter in der Tabelle um."""
@@ -637,9 +658,30 @@ class SitemapGeneratorApp(LogRouter, App):
         )
 
     def on_url_table_url_highlighted(self, event: UrlTable.UrlHighlighted) -> None:
-        """Aktualisiert das Stats-Panel bei Cursor-Bewegung."""
+        """Aktualisiert das Detail-Panel (und ggf. die Vorschau) bei Cursor-Bewegung."""
         stats_panel = self.query_one("#stats-panel", StatsPanel)
         stats_panel.show_url_detail(event.result)
+        if self.show_preview:
+            self._load_preview(event.result.url)
+
+    @work(exclusive=True, group="preview")
+    async def _load_preview(self, url: str) -> None:
+        """Laedt den Seiten-Screenshot fuer das Vorschau-Panel.
+
+        Args:
+            url: Die zu fotografierende URL.
+        """
+        panel = self.query_one("#preview-panel", PreviewPanel)
+        panel.show_loading()
+        if self._preview_service is None:
+            self._preview_service = PreviewService()
+        data = await self._preview_service.capture(url)
+        panel.show_preview(data)
+
+    async def on_unmount(self) -> None:
+        """Schliesst den Vorschau-Browser beim Beenden."""
+        if self._preview_service is not None:
+            await self._preview_service.close()
 
     def action_toggle_log(self) -> None:
         """Blendet das Log-Panel (samt Splitter) ein/aus."""

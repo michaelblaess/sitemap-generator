@@ -24,6 +24,23 @@ from sitemap_generator.i18n import load_locale, t
 from sitemap_generator.models.settings import Settings
 
 
+def _preinit_graphics() -> None:
+    """Initialisiert textual-image vor dem App-Start.
+
+    textual-image sendet beim Import Terminal-Queries (DA1, Cell-Size).
+    Diese muessen laufen, bevor Textual stdin uebernimmt - sonst landen die
+    Antworten als Muell-Input in Textual-Widgets.
+    """
+    try:
+        import textual_image.renderable  # noqa: F401
+        import textual_image.widget  # noqa: F401
+        from textual_image._terminal import get_cell_size
+
+        get_cell_size()
+    except Exception:
+        pass
+
+
 def main() -> None:
     """Haupteinstiegspunkt fuer die CLI."""
     # Sprache aus Settings laden (fuer CLI-Hilfe)
@@ -147,6 +164,11 @@ def main() -> None:
     if start_url and os.path.isfile(start_url) and start_url.lower().endswith(".xml"):
         sitemap_file = os.path.abspath(start_url)
         start_url = ""  # Wird aus der XML-Datei ermittelt
+
+    # textual-image vor App-Start initialisieren (nur wenn die Vorschau
+    # aktiv ist), damit die Terminal-Query-Antworten nicht in Widgets landen.
+    if settings.show_preview:
+        _preinit_graphics()
 
     from sitemap_generator.app import SitemapGeneratorApp
 

@@ -38,7 +38,20 @@ Screen {
 }
 
 /* 1fr — faengt den Restplatz neben dem (per Splitter resize-baren)
-   left-panel auf. */
+   left-panel auf. Enthaelt das Vorschau-Panel (oben) und das Detail-Panel. */
+#right-panel {
+    width: 1fr;
+    height: 1fr;
+    layout: vertical;
+}
+
+/* Vorschau-Panel - nur sichtbar wenn die Seiten-Vorschau aktiviert ist. */
+#preview-panel {
+    height: 45%;
+    min-height: 8;
+    border-bottom: solid $accent;
+}
+
 #stats-panel {
     width: 1fr;
     height: 1fr;

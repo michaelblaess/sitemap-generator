@@ -57,6 +57,7 @@ class Settings:
         self.concurrency: int = 8
         self.timeout: int = 30
         self.max_depth: int = 10
+        self.show_preview: bool = False
 
     def save(self) -> None:
         """Speichert die Einstellungen in eine JSON-Datei."""
@@ -69,6 +70,7 @@ class Settings:
             "concurrency": self.concurrency,
             "timeout": self.timeout,
             "max_depth": self.max_depth,
+            "show_preview": self.show_preview,
         }
         _SETTINGS_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
@@ -93,6 +95,7 @@ class Settings:
                 settings.concurrency = int(data.get("concurrency", settings.concurrency))
                 settings.timeout = int(data.get("timeout", settings.timeout))
                 settings.max_depth = int(data.get("max_depth", settings.max_depth))
+                settings.show_preview = bool(data.get("show_preview", settings.show_preview))
             except Exception:
                 pass
 

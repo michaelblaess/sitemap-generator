@@ -48,7 +48,15 @@ Neue Felder auf `CrawlResult`, befuellt im Crawler, angezeigt im Detail-Panel.
 Anzeige: zusaetzliche `_detail_line`-Bloecke im Detail-Panel, evtl. mit
 `Rule`-Trennern gruppiert (Tech / SEO / HTTP).
 
-### Phase 2 - Seiten-Vorschau als Bild
+### Phase 2 - Seiten-Vorschau als Bild (ERLEDIGT)
+
+Umgesetzt: `services/preview_service.py` (Playwright-Sidecar, lazy Browser,
+Screenshot-Cache), `widgets/preview_panel.py` (TGP/Sixel via textual-image +
+Halfblock-Fallback), Setting `show_preview` (Default aus), Layout `#right-panel`
+(Vorschau oben, Detail unten), textual-image-Preinit in `__main__.py`.
+Screenshot wird lazy beim Auswaehlen einer URL-Zeile geholt.
+
+### Phase 2 (Original-Beschreibung) - Seiten-Vorschau als Bild
 
 Aufwaendiger, daher getrennt:
 - **Dependency** `textual-image[textual]` (TGP/Sixel) + Halfblock-Fallback -

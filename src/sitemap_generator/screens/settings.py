@@ -36,6 +36,13 @@ class SitemapSettingsScreen(BaseSettingsScreen):
                     id="set-playwright",
                 )
             with Horizontal(classes="settings-row"):
+                yield Label(t("settings.preview_label"))
+                yield Checkbox(
+                    t("settings.preview_checkbox"),
+                    value=bool(self._settings.get("show_preview", False)),
+                    id="set-preview",
+                )
+            with Horizontal(classes="settings-row"):
                 yield Label(t("settings.concurrency_label"))
                 yield Input(
                     value=str(self._settings.get("concurrency", 8)),
@@ -62,6 +69,7 @@ class SitemapSettingsScreen(BaseSettingsScreen):
         """Schreibt die Crawl-Optionen aus den Widgets ins Ergebnis-Dict."""
         settings["respect_robots"] = self.query_one("#set-robots", Checkbox).value
         settings["render"] = self.query_one("#set-playwright", Checkbox).value
+        settings["show_preview"] = self.query_one("#set-preview", Checkbox).value
         settings["concurrency"] = self._int("#set-concurrency", 8)
         settings["timeout"] = self._int("#set-timeout", 30)
         settings["max_depth"] = self._int("#set-max-depth", 10)
