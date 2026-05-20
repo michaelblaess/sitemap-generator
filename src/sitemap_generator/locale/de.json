@@ -258,6 +258,6 @@
   "settings.timeout_label": "Timeout (Sek.):",
   "settings.max_depth_label": "Max. Crawl-Tiefe:",
   "table.tab_results": "Ergebnisse",
-  "table.tab_tree": "Baumansicht / Struktur",
-  "header.concurrency_value": "{count} parallel requests"
+  "table.tab_tree": "Seitenbaum",
+  "header.concurrency_value": "{count} parallele Requests"
 }

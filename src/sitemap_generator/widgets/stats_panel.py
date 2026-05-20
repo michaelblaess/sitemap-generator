@@ -206,18 +206,21 @@ class StatsPanel(VerticalScroll):
         if result.parent_url:
             safe_parent = _sanitize_url(result.parent_url)
             lines.append(self._detail_line(t("detail.parent"), safe_parent, link_url=safe_parent))
+        # Tech-Stack inline mitnehmen — eine knappe Zeile, dafuer kein
+        # eigenes 1-Zeilen-Panel.
+        if result.tech:
+            lines.append(self._detail_line(t("detail.tech"), ", ".join(result.tech)))
         if result.error_message:
             lines.append(self._detail_line(t("detail.error"), result.error_message, "red"))
         return self._panel(t("detail.page_heading"), lines)
 
-    def _issues_panel(self, result: CrawlResult) -> Panel:
-        """Baut das Panel mit den erkannten Problemen (gruen wenn keine)."""
+    def _issues_panel(self, result: CrawlResult) -> Panel | None:
+        """Panel mit erkannten Problemen — None wenn keine, dann wird nichts gezeigt."""
         issues = detect_issues(result)
-        if issues:
-            body: list = [Text(f"  • {issue}", style="yellow") for issue in issues]
-            return self._panel(t("detail.issues_heading"), body, border_style="red")
-        ok_body: list = [Text(f"  {t('issue.none')}", style="green")]
-        return self._panel(t("detail.issues_heading"), ok_body, border_style="green")
+        if not issues:
+            return None
+        body: list = [Text(f"  • {issue}", style="yellow") for issue in issues]
+        return self._panel(t("detail.issues_heading"), body, border_style="red")
 
     def _referring_panel(self, result: CrawlResult) -> Panel:
         """Baut das Panel mit den verweisenden Seiten (fuer 4xx/5xx)."""
@@ -242,18 +245,21 @@ class StatsPanel(VerticalScroll):
         """
         self._selected_result = result
 
-        panels: list = [self._page_panel(result), self._issues_panel(result)]
+        # Reihenfolge: Seite (Tech inline) > Probleme (nur wenn vorhanden)
+        # > HTTP-Header > SEO/Meta > Verweisende Seiten.
+        panels: list = [self._page_panel(result)]
 
-        if result.tech:
-            panels.append(self._panel(t("detail.tech"), [Text("  " + ", ".join(result.tech))]))
-
-        seo_lines = self._seo_lines(result.seo)
-        if seo_lines:
-            panels.append(self._panel(t("detail.seo_heading"), seo_lines))
+        issues_panel = self._issues_panel(result)
+        if issues_panel is not None:
+            panels.append(issues_panel)
 
         if result.response_headers:
             http_lines = [self._detail_line(name, value) for name, value in result.response_headers.items()]
             panels.append(self._panel(t("detail.http_heading"), http_lines))
+
+        seo_lines = self._seo_lines(result.seo)
+        if seo_lines:
+            panels.append(self._panel(t("detail.seo_heading"), seo_lines))
 
         # Verweisende Seiten nur fuer 4xx/5xx Fehler anzeigen
         if result.referring_pages and result.http_status_code >= 400:
