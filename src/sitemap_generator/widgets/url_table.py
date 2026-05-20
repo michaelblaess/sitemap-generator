@@ -68,6 +68,7 @@ class UrlTable(Static):
         self._spinner_frame: int = 0
         self._spinner_timer = None
         self._sitemap_urls: set[str] = set()
+        self._known_urls: set[str] = set()
         self._auto_scroll: bool = True
         self._auto_scroll_row: int = -1
 
@@ -200,6 +201,21 @@ class UrlTable(Static):
         if self._results:
             self._refresh_table()
 
+    def _is_redirect_to_known_url(self, result: CrawlResult) -> bool:
+        """Interner Redirect, dessen Ziel bereits in den Ergebnissen vorhanden ist.
+
+        Typisches Beispiel: ``/kontakt`` -> 301 -> ``/kontakt/`` und ``/kontakt/``
+        ist sowieso schon gecrawlt. Diese Doppel-Eintraege blenden wir in der
+        Tabelle und im Baum aus, behalten sie aber in ``self._results`` —
+        spaeter wertvoll fuer den "interne Links bereinigen"-Bericht.
+        """
+        if result.status != PageStatus.REDIRECT:
+            return False
+        target = (result.redirect_url or "").split("#", 1)[0]
+        if not target or target == result.url:
+            return False
+        return target in self._known_urls
+
     def _matches_filter(self, result: CrawlResult) -> bool:
         """Prueft ob ein Ergebnis dem aktuellen Filter entspricht.
 
@@ -210,6 +226,11 @@ class UrlTable(Static):
             True wenn das Ergebnis angezeigt werden soll.
         """
         if self._show_only_errors and not result.is_error:
+            return False
+        # Interne Redirects, deren Ziel sowieso schon in der Tabelle steht,
+        # ausblenden — sonst landet z.B. /kontakt (301) und /kontakt/ (200)
+        # als zwei nahezu identische Zeilen in der Liste.
+        if self._is_redirect_to_known_url(result):
             return False
         if self._filter_text:
             search = self._filter_text.lower()
@@ -310,6 +331,7 @@ class UrlTable(Static):
         """Leert alle Ergebnisse, die Tabelle und den Baum-Tab."""
         self._results.clear()
         self._filtered.clear()
+        self._known_urls.clear()
         self._row_counter = 0
         self._filter_text = ""
         self._auto_scroll = True
@@ -348,6 +370,7 @@ class UrlTable(Static):
             results: Liste der CrawlResults.
         """
         self._results = results
+        self._known_urls = {r.url for r in results}
         self._auto_scroll = True
         self._auto_scroll_row = -1
         self._apply_filter()
@@ -366,6 +389,17 @@ class UrlTable(Static):
         is_new = result not in self._results
         if is_new:
             self._results.append(result)
+            self._known_urls.add(result.url)
+            # Wenn dieses neue Ergebnis Ziel eines bereits angezeigten 3xx-
+            # Redirects ist, muss die Tabelle neu gefiltert werden, damit
+            # der Duplikat-Eintrag verschwindet.
+            if result.status != PageStatus.REDIRECT and any(
+                r.status == PageStatus.REDIRECT and (r.redirect_url or "").split("#", 1)[0] == result.url
+                for r in self._filtered
+            ):
+                self._filtered = [r for r in self._results if self._matches_filter(r)]
+                self._refresh_table()
+                return
 
         if self._show_only_errors or self._filter_text:
             # Filter aktiv - Struktur koennte sich aendern
@@ -377,6 +411,10 @@ class UrlTable(Static):
 
         # Kein Filter aktiv
         if is_new:
+            # Redirects, deren Ziel sowieso schon in der Tabelle steht,
+            # nicht als Zeile zeigen (bleiben in _results fuer Reports).
+            if self._is_redirect_to_known_url(result):
+                return
             # Neue Zeile hinzufuegen (kein clear/rebuild)
             self._filtered.append(result)
             self._row_counter += 1

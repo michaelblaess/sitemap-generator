@@ -131,6 +131,20 @@ class PageTree(Widget):
                     self._root_url = r.url
                     break
 
+    def _is_dup_redirect(self, url: str) -> bool:
+        """Interner Redirect, dessen Ziel sowieso schon im Baum vorhanden ist.
+
+        Gleicher Filter wie in der URL-Tabelle — z.B. /kontakt -> /kontakt/ —
+        damit derselbe Knoten nicht doppelt erscheint.
+        """
+        result = self._url_to_result.get(url)
+        if result is None or result.status != PageStatus.REDIRECT:
+            return False
+        target = (result.redirect_url or "").split("#", 1)[0]
+        if not target or target == url:
+            return False
+        return target in self._url_to_result
+
     def _matches_filter(self, url: str) -> bool:
         """Substring-Match auf URL / Statuscode / Status-Name."""
         if not self._filter_text:
@@ -153,9 +167,15 @@ class PageTree(Widget):
         passende Knoten ohne erkennbaren Pfad im Baum erscheinen).
         """
         if not self._filter_text:
-            return set(self._url_to_result.keys()) | ({self._root_url} if self._root_url else set())
+            # Auch ohne Text-Filter: Duplikat-Redirects nicht zeigen.
+            visible_all = {u for u in self._url_to_result if not self._is_dup_redirect(u)}
+            if self._root_url:
+                visible_all.add(self._root_url)
+            return visible_all
         visible: set[str] = set()
         for url in self._url_to_result:
+            if self._is_dup_redirect(url):
+                continue
             if not self._matches_filter(url):
                 continue
             cur: str | None = url
