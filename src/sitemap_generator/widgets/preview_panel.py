@@ -161,6 +161,8 @@ class PreviewPanel(Widget):
         backend = _select_graphics_backend()
         if backend is not None:
             self._graphics_widget_cls = _load_graphics_widget_class(backend)
+        self._loading_timer: Any = None
+        self._loading_step: int = 0
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="preview-scroll"):
@@ -186,13 +188,31 @@ class PreviewPanel(Widget):
             widget.image = None  # type: ignore[attr-defined]
 
     def show_loading(self) -> None:
-        """Zeigt den Ladezustand an."""
+        """Zeigt den Ladezustand an — mit wachsender Punkt-Animation."""
+        self._loading_step = 0
         self._set_status(t("preview.loading"))
         if self._graphics_widget_cls is not None:
             self._clear_graphics_image()
         else:
             with contextlib.suppress(Exception):
                 self.query_one("#preview-content", Static).update("")
+        # Animation starten — Punkte zaehlen bis 3, dann wieder von vorne.
+        if self._loading_timer is not None:
+            with contextlib.suppress(Exception):
+                self._loading_timer.stop()
+        self._loading_timer = self.set_interval(0.4, self._tick_loading)
+
+    def _tick_loading(self) -> None:
+        """Aktualisiert die Lade-Animation um einen Punkt."""
+        self._loading_step = (self._loading_step + 1) % 4
+        dots = "." * self._loading_step
+        self._set_status(t("preview.loading") + dots)
+
+    def _stop_loading_animation(self) -> None:
+        if self._loading_timer is not None:
+            with contextlib.suppress(Exception):
+                self._loading_timer.stop()
+            self._loading_timer = None
 
     def show_preview(self, image_data: bytes | None) -> None:
         """Rendert den Screenshot oder zeigt einen Fallback-Text.
@@ -200,6 +220,7 @@ class PreviewPanel(Widget):
         Args:
             image_data: PNG-Bilddaten oder None.
         """
+        self._stop_loading_animation()
         if self._graphics_widget_cls is not None:
             self._show_graphics(image_data)
         else:

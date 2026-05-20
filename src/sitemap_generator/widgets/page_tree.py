@@ -145,6 +145,10 @@ class PageTree(Widget):
             if r.parent_url:
                 self._children[r.parent_url].append(r.url)
                 self._parent_of[r.url] = r.parent_url
+        # Geschwister alphabetisch sortieren — vorher war die Reihenfolge
+        # vom Crawl-Abschluss diktiert und damit zufaellig.
+        for parent in self._children:
+            self._children[parent].sort()
         # Wurzel ermitteln in 3 Stufen — soll auch dann eine Wurzel finden,
         # wenn start_url und result.url leicht unterschiedlich normalisiert
         # sind (Encoding, Trailing-Slash).
