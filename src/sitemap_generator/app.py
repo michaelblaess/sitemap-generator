@@ -700,7 +700,22 @@ class SitemapGeneratorApp(LogRouter, App):
         panel.show_preview(data)
 
     async def on_unmount(self) -> None:
-        """Schliesst den Vorschau-Browser beim Beenden."""
+        """Beendet den Vorschau-Sidecar sauber.
+
+        Reihenfolge ist wichtig: erst laufende Preview-Worker abbrechen,
+        dann Browser/Playwright schliessen. Sonst feuert ein in-flight
+        ``page.goto()`` noch nach dem Browser-Close ein
+        ``net::ERR_ABORTED`` als unbehandelte Future-Exception auf stderr.
+        """
+        cancelled_preview = False
+        for worker in list(self.workers):
+            if getattr(worker, "group", None) == "preview":
+                worker.cancel()
+                cancelled_preview = True
+        # Kurz warten, damit die page.close()-finally-Bloecke durchlaufen
+        # bevor wir den Browser killen.
+        if cancelled_preview:
+            await asyncio.sleep(0.2)
         if self._preview_service is not None:
             await self._preview_service.close()
 

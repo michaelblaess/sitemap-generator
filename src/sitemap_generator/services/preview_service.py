@@ -8,6 +8,7 @@ ersten Screenshot gestartet und fuer weitere Aufrufe offen gehalten.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 
 from playwright.async_api import Browser, Playwright, async_playwright
 
@@ -67,13 +68,17 @@ class PreviewService:
         return self._browser
 
     async def close(self) -> None:
-        """Schliesst Browser und Playwright-Instanz."""
-        try:
-            if self._browser is not None:
+        """Schliesst Browser und Playwright-Instanz best-effort.
+
+        Beide Aufrufe einzeln gegen Exceptions abschirmen — sonst kann
+        ein scheiternder Browser-Close das anschliessende
+        ``playwright.stop()`` blockieren, das die OS-Pipe-Cleanup macht.
+        """
+        if self._browser is not None:
+            with contextlib.suppress(Exception):
                 await self._browser.close()
-            if self._playwright is not None:
+            self._browser = None
+        if self._playwright is not None:
+            with contextlib.suppress(Exception):
                 await self._playwright.stop()
-        except Exception:
-            pass
-        self._browser = None
-        self._playwright = None
+            self._playwright = None
